@@ -40,7 +40,8 @@ enum ERR_CODE
     ERR_SELFTEST_POTENTIO,              // 电压自检失败    
     ERR_SELFTEST_AMPERO,                // 电流自检失败    
     ERR_SELFTEST_IMPEDANCE,             // 电阻自检失败
-                                        // 可在这里扩展初自检错误代码
+		ERR_SELFTEST_ERROR,                 //自检失败
+											
 
     /*登陆*/
     ERR_LOGIN_SUCCESS = 400,             // 登陆成功
@@ -54,8 +55,10 @@ enum ERR_CODE
     ERR_TEST_HAVE_RESIDUE_SOLUTION,      // 检测卡有残留液体，无法检测
     ERR_TEST_MOTOR_PUSH,                 // 电机推动失败
     ERR_TEST_HEAT,                       // 加热异常
+		ERR_TEST_HEAT_SUCCESS,               // 加热到到指定温度
     ERR_TEST_INSERT_CARD_TOUT,           // 等待插入测试卡超时
     ERR_TEST_HAS_CARD,                   // 已经有卡
+		ERR_TEST_SAMPLE_COLLECT_ERR,         //样品测试检测失败
 		
 		/*插卡成功*/
 		ERR_TEST_CARD_INSERT_SUCCESS,                   //卡插入成功

@@ -42,7 +42,7 @@ void EXTIX_Init(void)
   	EXTI_Init(&EXTI_InitStructure);	 	//根据EXTI_InitStruct中指定的参数初始化外设EXTI寄存器
  
 		NVIC_InitStructure.NVIC_IRQChannel = EXTI1_IRQn;			//使能按键所在的外部中断通道
-  	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x09;//抢占优先级6
+  	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x09;//抢占优先级9
   	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;		//子优先级0
   	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;				//使能外部中断通道
   	NVIC_Init(&NVIC_InitStructure); 

@@ -23,8 +23,9 @@ History:
 
 #include "cmd.h"
 #include "error.h"
-
 #include "max6675.h"
+#include "DetectBoard.h"
+
 //任务优先级
 #define START_TASK_PRIO		1
 //任务堆栈大小	
@@ -148,7 +149,6 @@ void AutoReloadCallback(TimerHandle_t xTimer)
 									(eNotifyAction)eSetBits);
 		CardCheckFlag=0;	
 	}
-	//
 	ScanHeatingTemp();
 	SYSLED=!SYSLED;
 }

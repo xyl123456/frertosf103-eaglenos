@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\FreeRTOS\include;..\FreeRTOS\portable\RVDS\ARM_CM3;..\HARDWARE\EXTI;..\HARDWARE\KEY;..\HARDWARE\TIMER;..\MALLOC;..\HARDWARE\MESSAGE;..\CJSON;..\HARDWARE\MAX6675</IncludePath>
+              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\FreeRTOS\include;..\FreeRTOS\portable\RVDS\ARM_CM3;..\HARDWARE\EXTI;..\HARDWARE\KEY;..\HARDWARE\TIMER;..\MALLOC;..\HARDWARE\MESSAGE;..\CJSON;..\HARDWARE\MAX6675;..\HARDWARE\AD5676;..\HARDWARE\AD5933;..\HARDWARE\AD7124;..\HARDWARE\DetectBoard;..\HARDWARE\SPI;..\HARDWARE\SWITCH</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -431,6 +431,46 @@
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\MAX6675\max6675.c</FilePath>
             </File>
+            <File>
+              <FileName>AD5676.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\AD5676\AD5676.c</FilePath>
+            </File>
+            <File>
+              <FileName>AD5933.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\AD5933\AD5933.c</FilePath>
+            </File>
+            <File>
+              <FileName>AD5933_I2C.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\AD5933\AD5933_I2C.c</FilePath>
+            </File>
+            <File>
+              <FileName>AD7124.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\AD7124\AD7124.c</FilePath>
+            </File>
+            <File>
+              <FileName>platform_drivers.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\AD7124\platform_drivers.c</FilePath>
+            </File>
+            <File>
+              <FileName>DetectBoard.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\DetectBoard\DetectBoard.c</FilePath>
+            </File>
+            <File>
+              <FileName>SPI1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\SPI\SPI1.c</FilePath>
+            </File>
+            <File>
+              <FileName>AnalogSwitch.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\SWITCH\AnalogSwitch.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -472,11 +512,6 @@
           <GroupName>FWLib</GroupName>
           <Files>
             <File>
-              <FileName>misc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\STM32F10x_FWLib\src\misc.c</FilePath>
-            </File>
-            <File>
               <FileName>stm32f10x_gpio.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\STM32F10x_FWLib\src\stm32f10x_gpio.c</FilePath>
@@ -485,6 +520,11 @@
               <FileName>stm32f10x_rcc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\STM32F10x_FWLib\src\stm32f10x_rcc.c</FilePath>
+            </File>
+            <File>
+              <FileName>misc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\STM32F10x_FWLib\src\misc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_usart.c</FileName>
@@ -500,6 +540,11 @@
               <FileName>stm32f10x_exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\STM32F10x_FWLib\src\stm32f10x_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\STM32F10x_FWLib\src\stm32f10x_spi.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -535,6 +580,11 @@
               <FileName>timers.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\FreeRTOS\timers.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_dbgmcu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\STM32F10x_FWLib\src\stm32f10x_dbgmcu.c</FilePath>
             </File>
           </Files>
         </Group>

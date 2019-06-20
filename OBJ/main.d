@@ -54,3 +54,7 @@
 ..\obj\main.o: ..\HARDWARE\MESSAGE\cmd.h
 ..\obj\main.o: ..\HARDWARE\MESSAGE\error.h
 ..\obj\main.o: ..\HARDWARE\MAX6675\max6675.h
+..\obj\main.o: ..\HARDWARE\DetectBoard\DetectBoard.h
+..\obj\main.o: ..\HARDWARE\AD7124\AD7124.h
+..\obj\main.o: ..\HARDWARE\AD7124\AD7124_regs.h
+..\obj\main.o: ..\HARDWARE\AD7124\platform_drivers.h

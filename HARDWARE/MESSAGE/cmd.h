@@ -28,6 +28,10 @@ History:
 }
 
 */
+
+
+
+
 #define      CMD_CODE                           "code"                 /*状态码（错误码）,该属性的值见err.h*/
 #define      CMD_MSG                            "msg"                  /*消息说明*/
 #define      CMD_TYPE                           "type"                 /*命令类型：样本检测、QC、设置、数据管理*/
@@ -62,6 +66,7 @@ History:
 /*Sample test 有参子命令（测试预处理）*/
 #define			 CMD_TEST_VAL_PRE_TEST               "pre_test"       //包含加热，推进标液
 
+#define      CMD_TEST_VAL_COLLECT                "sample_collect" //样品采集
 
 /*Sample test 有参子命令（打印）*/
 #define      CMD_TEST_VAL_PRINT                 "print"                    /*打印命令*/ 
@@ -94,6 +99,8 @@ History:
 #define     CMD_REPORT_VAL_K                     "k"                        /* k 离子浓度*/
 #define     CMD_REPORT_VAL_NA                    "na"                       /* na 离子浓度*/
 #define     CMD_REPORT_VAL_CA                    "ca"                       /* ca 离子浓度*/
+#define     CMD_REPORT_VAL_IMG                   "img"
+#define     CMD_REPORT_VAL_CL                    "cl"
 
 /* set 子命令 */
 #define      CMD_VAL_SUBTYPE_QC_REMIND           "qc_remind"                /* 提醒QC子命令 */

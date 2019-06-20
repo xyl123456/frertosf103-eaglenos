@@ -19,11 +19,16 @@ History:
 #include "max6675.h"
 #include "timer.h"
 
+
+#include "DetectBoard.h"
+
 uint8_t startScanFlag=0;
+uint8_t heatSendMessageFlag=0;
 
 uint8_t heatBodyFlag=0;
 float setingTempValue=0;
 
+int numb[5]={0x7FFFFF00,3333,5555,6666,888};
 extern TaskHandle_t MessageProcessTask_Handler;	//通知处理句柄
 uint32_t systemState;//系统状态检测变量
 
@@ -69,7 +74,6 @@ uint32_t ScanCodeInit(void)
 	return ERR_SELFTEST_SUCCESS;
 }
 
-
 /*
 * @Description：实时检测温度函数
 * @para ：void
@@ -80,17 +84,20 @@ void ScanHeatingTemp(void)
 	float reactionTempValue;//heatingTempValue;
 	if(heatBodyFlag==1){
 		reactionTempValue = Max6675_readTemperature(1);//反应区
+		printf("the temp is %.2f\n",reactionTempValue);
 		//HeatingTempValue = Max6675_readTemperature(2);//加热区
 		if(reactionTempValue>=setingTempValue){
-			TIM_SetCompare3(TIM3,0);//输出占空比0%
-			
-			//heatBodyFlag=0;//检测完成置标志位
-			
+			TIM_SetCompare3(TIM3,10000);//输出占空比0%
+			heatBodyFlag=0;//检测完成置标志位
+			if(heatSendMessageFlag==0){
+				heatSendMessageFlag=1;
 			//发送消息ERR_TEST_PREPARE_SUCCESS
 			xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
-									(uint32_t)ERR_TEST_PREPARE_SUCCESS,
+									(uint32_t)ERR_TEST_HEAT_SUCCESS,
 									(eNotifyAction)eSetBits);
-			
+				}
+			}else{
+				heatSendMessageFlag=0;
 			}
 		}
 }
@@ -116,6 +123,7 @@ void HeatInit(void){
 	heatBodyFlag=0;
 	//PWM格式 TIME3 的CH3
 	TIM3_PWM_Init(10000,7200);        //7200分频，周期1S      //不分频。PWM频率=72000000/900=80Khz
+	TIM_SetCompare3(TIM3,10000);
 }
 
 /*
@@ -146,6 +154,7 @@ void HalBoardInit(void)
 	CardCheckInit();
 	Max6675Init();	
 	HeatInit();
+	DetectBoard_Initial();//采集板初始化
 	systemState=ScanCodeInit();
 	//systemState=ERR_INIT_SUCCESS;
 }
@@ -177,14 +186,12 @@ uint32_t IntialProcess(void)
 */
 uint32_t SelfTestProcess(void)
 {
-	if(1){
-	return ERR_SELFTEST_SUCCESS;
+	int8_t selfTestState =DetectBoard_SelfCheck();
+	if(selfTestState==0){
+		return ERR_SELFTEST_SUCCESS;
+	}else{
+		return ERR_SELFTEST_ERROR;
 	}
-	/*
-	return ERR_SELFTEST_POTENTIO;
-	return ERR_SELFTEST_AMPERO;
-	return ERR_SELFTEST_IMPEDANCE
-	*/
 }
 
 
@@ -214,6 +221,84 @@ void StartHeatBody(float tempValue)
 		vTaskDelay(1000/portTICK_PERIOD_MS);	
 	
 }
+
+
+
+
+/*extern 函数
+* @Description：发送检测到的数据
+* @para ：void*buf
+* @return void
+*/
+void SendSampleCollect(uint8_t sort ,void *buf)
+{
+	uint8_t i=sort;
+	int cnt_i;
+	TestCard_One 			testCardOne;
+	TestCard_Two 			testCardTwo;
+	TestCard_Three 		testCardThree;
+	int MgInt[Apoints];
+	int CaInt[Apoints];
+	int KInt[Apoints];
+	int NaInt[Apoints];
+	int ClInt[Apoints];
+	
+	int len;
+	char *out;
+	//封装JSON数据
+	cJSON *cjson_message,*mes_data,*data_item;
+	cjson_message = cJSON_CreateObject();
+	cJSON_AddNumberToObject(cjson_message,CMD_CODE,ERR_NONE);
+	cJSON_AddStringToObject(cjson_message, CMD_MSG, "SampleCollect Success");
+	cJSON_AddStringToObject(cjson_message, CMD_TYPE, CMD_TYPE_DATA_REPORT);
+	
+	switch(i){
+		case 1:
+			mymemcpy(testCardOne.buffer,buf,sizeof(buf));
+			cJSON_AddItemToObject(cjson_message, CMD_VAL, mes_data = cJSON_CreateArray());
+			cJSON_AddItemToArray(mes_data, data_item=cJSON_CreateObject());
+		for(cnt_i=0;cnt_i<5;cnt_i++){
+			MgInt[cnt_i]=(testCardOne.TestCardOne.iMg[cnt_i]>>8)&0xFFFFFFFF;
+			CaInt[cnt_i]=(testCardOne.TestCardOne.iCa[cnt_i]>>8)&0xFFFFFFFF;
+			KInt[cnt_i]=(testCardOne.TestCardOne.K[cnt_i]>>8)&0xFFFFFFFF;
+			NaInt[cnt_i]=(testCardOne.TestCardOne.Na[cnt_i]>>8)&0xFFFFFFFF;
+			ClInt[cnt_i]=(testCardOne.TestCardOne.Cl[cnt_i]>>8)&0xFFFFFFFF;
+		}
+		
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_IMG, cJSON_CreateIntArray(MgInt,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CA, cJSON_CreateIntArray(CaInt,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_K, cJSON_CreateIntArray(KInt,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_NA, cJSON_CreateIntArray(NaInt,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CL, cJSON_CreateIntArray(ClInt,Apoints));
+		
+		
+		 //cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CL, cJSON_CreateIntArray(numb,5));
+		
+			break;
+		case 2:
+			mymemcpy(testCardTwo.buffer,buf,sizeof(buf));
+			break;
+		case 3:
+			mymemcpy(testCardThree.buffer,buf,sizeof(buf));
+			break;
+		case 4:
+			//mymemcpy(testCardTwo.buffer,buf,sizeof(buf));
+			break;
+		case 5:
+			//mymemcpy(testCardTwo.buffer,buf,sizeof(buf));
+			break;
+		default:
+			break;	
+	}
+	
+	out = cJSON_PrintUnformatted(cjson_message);
+	len=strlen(out);
+	MyUartSend(UART1_PORT,out,len);
+	free(out);
+	cJSON_Delete(cjson_message);
+}
+
+
 
 /*extern 函数
 * @Description：获取测试卡的数值
@@ -267,32 +352,40 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 		tempValue=atof(valueString);
 		StartHeatBody((float)tempValue);
 	}
-	//打印命令
-	if(mymemcmp(keyString,CMD_TEST_VAL_PRINT,strlen(CMD_TEST_VAL_PRINT))==0){
-		
-	}
-	//检测打印卡类型,测量对应的数值
-	if(mymemcmp(keyString,CMD_TEST_CARD_VALUE,strlen(CMD_TEST_CARD_VALUE))==0){
-
+	//样品采集命令
+	if(mymemcmp(keyString,CMD_TEST_VAL_COLLECT,strlen(CMD_TEST_VAL_COLLECT))==0){
 		if(mymemcmp(valueString,CMD_TEST_CARD_ONE,strlen(CMD_TEST_CARD_ONE))==0){
-			uint32_t cardCode=GetTestCardValue(valueString);
-			if(cardCode==1){
-				//发送数据
-				
-			}else{
-				xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
-									(uint32_t)ERR_TEST_GET_VALUE,
+			TestCard_One testCardOne;
+			int8_t sampleCollectState;
+			sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);
+			if(sampleCollectState!=0)
+			{
+				//数据检测错误,发送检测失败消息
+							xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
+									(uint32_t)ERR_TEST_SAMPLE_COLLECT_ERR,
 									(eNotifyAction)eSetBits);
+			}else{
+			//发送数据
+			SendSampleCollect(SAMPLE_COLLECT_CARD_ONE,testCardOne.buffer);
 			}
 		}
 		if(mymemcmp(valueString,CMD_TEST_CARD_TWO,strlen(CMD_TEST_CARD_TWO))==0){
+			TestCard_Two testCardTwo;
+			DetectBoard_GetCartridgeBData(&testCardTwo);
 		}
 		if(mymemcmp(valueString,CMD_TEST_CARD_THREE,strlen(CMD_TEST_CARD_THREE))==0){
+			TestCard_Three testCardThree;
+			DetectBoard_GetCartridgeCData(&testCardThree); 
 		}
 		if(mymemcmp(valueString,CMD_TEST_CARD_FOUR,strlen(CMD_TEST_CARD_FOUR))==0){
+			
 		}
 		if(mymemcmp(valueString,CMD_TEST_CARD_FIVE,strlen(CMD_TEST_CARD_FIVE))==0){
+			
 		}
+	}
+	//打印命令
+	if(mymemcmp(keyString,CMD_TEST_VAL_PRINT,strlen(CMD_TEST_VAL_PRINT))==0){
 		
 	}
 }
@@ -492,9 +585,20 @@ void MessageProcess(uint32_t NotifyValue)
 		case ERR_TEST_MOTOR_PUSH:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Motor Error");
 			break;
+		/*预加热处理任务成功*/
+		case ERR_TEST_PREPARE_SUCCESS:
+			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Pre test Success");
+			break;
+		case ERR_TEST_HEAT_SUCCESS:
+			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Heat to set value");
+			break;
 		/*加热出错*/
 		case ERR_TEST_HEAT:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG, "Heat Error");
+			break;
+		/*检测卡检测出错*/
+		case ERR_TEST_SAMPLE_COLLECT_ERR:
+			cJSON_AddStringToObject(cjson_message, CMD_MSG, "Sample Collect Error");
 			break;
 		/*串口连接成功*/
 		case ERR_CONNECT_SUCCESS:
@@ -503,6 +607,7 @@ void MessageProcess(uint32_t NotifyValue)
 		/*卡插入成功*/
 		case ERR_TEST_CARD_INSERT_SUCCESS:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG, "Card Insert Success");
+		
 		default:
 			break;
 	}
