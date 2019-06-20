@@ -22,11 +22,11 @@ typedef union
 {
   struct Test_Card_One
     {
-      uint32_t iMg[Apoints];
-      uint32_t iCa[Apoints];
-      uint32_t K[Apoints];
-      uint32_t Na[Apoints];
-      uint32_t Cl[Apoints]; 
+      int iMg[Apoints];
+      int iCa[Apoints];
+      int K[Apoints];
+      int Na[Apoints];
+      int Cl[Apoints]; 
      }TestCardOne;   
      uint8_t buffer[sizeof(struct Test_Card_One)];
  }TestCard_One;  //A¿¨
@@ -35,12 +35,12 @@ typedef union
 {
   struct Test_Card_Two
     {
-      uint32_t PH[Bpoints];
-      uint32_t CO2_1[Bpoints];
-      uint32_t CO2_2[Bpoints];
-      uint32_t glu[Bpoints];
-      uint32_t pO2[Bpoints]; 
-      uint32_t Lac[Bpoints];
+      int PH[Bpoints];
+      int CO2_1[Bpoints];
+      int CO2_2[Bpoints];
+      int glu[Bpoints];
+      int pO2[Bpoints]; 
+      int Lac[Bpoints];
      }TestCardTwo;    
      uint8_t buffer[sizeof(struct Test_Card_Two)];
  }TestCard_Two;  //B¿¨
@@ -49,17 +49,17 @@ typedef union
 {
   struct Test_Card_Three
     {
-      uint32_t iMg[Cpoints];
-      uint32_t iCa[Cpoints];
-      uint32_t K[Cpoints];
-      uint32_t Na[Cpoints];
-      uint32_t PH[Cpoints];
-			uint32_t Cl[Cpoints];
-			uint32_t CO2_1[Cpoints];
-			uint32_t CO2_2[Cpoints];
-			uint32_t glu[Cpoints];
-			uint32_t pO2[Cpoints];
-			uint32_t Lac[Cpoints];
+      int iMg[Cpoints];
+      int iCa[Cpoints];
+      int K[Cpoints];
+      int Na[Cpoints];
+      int PH[Cpoints];
+			int Cl[Cpoints];
+			int CO2_1[Cpoints];
+			int CO2_2[Cpoints];
+			int glu[Cpoints];
+			int pO2[Cpoints];
+			int Lac[Cpoints];
      }TestCardThree;    
      uint8_t buffer[sizeof(struct Test_Card_Three)];
  }TestCard_Three;  //C¿¨

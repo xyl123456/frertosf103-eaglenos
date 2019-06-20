@@ -404,21 +404,21 @@ void Uart1Process(char *uartMemary,u8 uartLen)
 		int getCode = cJSON_GetObjectItem(root,CMD_CODE)->valueint;
 		//其它类的code
 		if(getCode == ERR_NONE){
-			char *typeSting = cJSON_GetObjectItem(root,"type")->valuestring;
-			if(mymemcmp(typeSting,CMD_TYPE_CONNECT,strlen(CMD_TYPE_CONNECT))==0){
+			char *typeString = cJSON_GetObjectItem(root,"type")->valuestring;
+			if(mymemcmp(typeString,CMD_TYPE_CONNECT,strlen(CMD_TYPE_CONNECT))==0){
 				//串口连接
 				xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
 									(uint32_t)ERR_CONNECT_SUCCESS,
 									(eNotifyAction)eSetBits);
 			}
-			if(mymemcmp(typeSting,CMD_TYPE_SELF_TEST,strlen(CMD_TYPE_SELF_TEST))==0){
+			if(mymemcmp(typeString,CMD_TYPE_SELF_TEST,strlen(CMD_TYPE_SELF_TEST))==0){
 							//自检命令通信,处理自检任务
 				uint32_t selfTestCode = SelfTestProcess();
 				xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
 							(uint32_t)selfTestCode,
 							(eNotifyAction)eSetBits);
 			}
-			if(mymemcmp(typeSting,CMD_TYPE_SAMPLE_TEST,strlen(CMD_TYPE_SAMPLE_TEST))==0){
+			if(mymemcmp(typeString,CMD_TYPE_SAMPLE_TEST,strlen(CMD_TYPE_SAMPLE_TEST))==0){
 				//样品检测类命令
 				//获取value命令值
 				cJSON *valueArry = cJSON_GetObjectItem(root,"value");//获取value数组
@@ -433,10 +433,10 @@ void Uart1Process(char *uartMemary,u8 uartLen)
 						}	
 				}
 			}
-			if(mymemcmp(typeSting,CMD_TYPE_QC,strlen(CMD_TYPE_QC))==0){
+			if(mymemcmp(typeString,CMD_TYPE_QC,strlen(CMD_TYPE_QC))==0){
 				//QC测试
 			}
-			if(mymemcmp(typeSting,CMD_TYPE_SET,strlen(CMD_TYPE_SET))==0){
+			if(mymemcmp(typeString,CMD_TYPE_SET,strlen(CMD_TYPE_SET))==0){
 				//SET设置
 			}
 		}
@@ -570,6 +570,7 @@ void MessageProcess(uint32_t NotifyValue)
 		case ERR_SELFTEST_POTENTIO:
 		case ERR_SELFTEST_AMPERO:
 		case ERR_SELFTEST_IMPEDANCE:
+		case ERR_SELFTEST_ERROR:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG, "Self Test Error");
 			break;
 		/*样本检测*/

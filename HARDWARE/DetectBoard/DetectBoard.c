@@ -162,23 +162,33 @@ int8_t DetectBoard_GetCartridgeAData(TestCard_One * CartridgeA)
 				j=(t&0xf);
 				switch (j){
 					case 0:
-						CartridgeA->TestCardOne.iMg[i] = t>>8;
+						CartridgeA->TestCardOne.iMg[i] =0x00ffffff&(t>>8);
+					  printf("CH:%d\r\n",j);
+					  printf("Value:%d\r\n",CartridgeA->TestCardOne.iMg[i]);
 					  count[0]++;
 					  break;
 					case 1:
-						CartridgeA->TestCardOne.iCa[i] = t>>8;
+						CartridgeA->TestCardOne.iCa[i] = 0x00ffffff&(t>>8);
+					  printf("CH:%d\r\n",j);
+					  printf("Value:%d\r\n",CartridgeA->TestCardOne.iCa[i]);
 					  count[1]++;
 					  break;
 					case 2:
-						CartridgeA->TestCardOne.K[i] = t>>8;
+						CartridgeA->TestCardOne.K[i] = 0x00ffffff&(t>>8);
+					  printf("CH:%d\r\n",j);
+					  printf("Value:%d\r\n",CartridgeA->TestCardOne.K[i]);
 					  count[2]++;
 					  break;
 					case 3:
-						CartridgeA->TestCardOne.Na[i] = t>>8;
+						CartridgeA->TestCardOne.Na[i] = 0x00ffffff&(t>>8);
+					  printf("CH:%d\r\n",j);
+					  printf("Value:%d\r\n",CartridgeA->TestCardOne.Na[i]);
 					  count[3]++;
 					  break;
 					case 5:
-						CartridgeA->TestCardOne.Cl[i] = t>>8;
+						CartridgeA->TestCardOne.Cl[i] = 0x00ffffff&(t>>8);
+					  printf("CH:%d\r\n",j);
+					  printf("Value:%d\r\n",CartridgeA->TestCardOne.Cl[i]);
 					  count[4]++;
 					  break;
 				}	
@@ -227,30 +237,30 @@ int8_t DetectBoard_GetCartridgeBData(TestCard_Two * CartridgeB)
 				j=t&0xf;
 				switch (j){
 					case 4:
-						CartridgeB->TestCardTwo.PH[i] = t>>8;	
+						CartridgeB->TestCardTwo.PH[i] = 0x00ffffff&(t>>8);	
             count[0]++;
 					  break;
 					case 6:
-						CartridgeB->TestCardTwo.CO2_1[i] = t>>8;
+						CartridgeB->TestCardTwo.CO2_1[i] = 0x00ffffff&(t>>8);
 					  count[1]++;
 					  break;
 					case 7:
-						CartridgeB->TestCardTwo.CO2_2[i] = t>>8;
+						CartridgeB->TestCardTwo.CO2_2[i] = 0x00ffffff&(t>>8);
 					  count[2]++;
 					  SW_TEST_config(SW_A3);
 					  break;
 					case 10:
-						CartridgeB->TestCardTwo.glu[i] = t>>8;
+						CartridgeB->TestCardTwo.glu[i] = 0x00ffffff&(t>>8);
 					  count[3]++;
 					  SW_TEST_config(SW_A4);
 					  break;
 					case 11:
-						CartridgeB->TestCardTwo.pO2[i] = t>>8;
+						CartridgeB->TestCardTwo.pO2[i] = 0x00ffffff&(t>>8);
 					  count[4]++;
 					  SW_TEST_config(SW_A5);
 					  break;
 					case 12:
-						CartridgeB->TestCardTwo.Lac[i] = t>>8;
+						CartridgeB->TestCardTwo.Lac[i] = 0x00ffffff&(t>>8);
 					  count[5]++;
 					  SW_TEST_config(SW_P1);
 					  break;
@@ -297,51 +307,51 @@ int8_t DetectBoard_GetCartridgeCData(TestCard_Three * CartridgeC)
 				j=t&0xf;
 				switch (j){
 					case 0:
-						CartridgeC->TestCardThree.iMg[i] = t>>8;	
+						CartridgeC->TestCardThree.iMg[i] = 0x00ffffff&(t>>8);	
             count[0]++;
 					  break;
 					case 1:
-						CartridgeC->TestCardThree.iCa[i] = t>>8;
+						CartridgeC->TestCardThree.iCa[i] = 0x00ffffff&(t>>8);
 					  count[1]++;
 					  break;
 					case 2:
-						CartridgeC->TestCardThree.K[i] = t>>8;
+						CartridgeC->TestCardThree.K[i] = 0x00ffffff&(t>>8);
 					  count[2]++;
 					  break;
 					case 3:
-						CartridgeC->TestCardThree.Na[i] = t>>8;
+						CartridgeC->TestCardThree.Na[i] = 0x00ffffff&(t>>8);
 					  count[3]++;
 					  break;
 					case 4:
-						CartridgeC->TestCardThree.PH[i] = t>>8;
+						CartridgeC->TestCardThree.PH[i] = 0x00ffffff&(t>>8);
 					  count[4]++;
 					  break;
 					case 5:
-						CartridgeC->TestCardThree.Cl[i] = t>>8;
+						CartridgeC->TestCardThree.Cl[i] = 0x00ffffff&(t>>8);
 					  count[5]++;
 					  SW_TEST_config(SW_P1);
 					  break;
 					case 6:
-						CartridgeC->TestCardThree.CO2_1[i] = t>>8;
+						CartridgeC->TestCardThree.CO2_1[i] = 0x00ffffff&(t>>8);
 					  count[6]++;
 					  break;
 					case 7:
-						CartridgeC->TestCardThree.CO2_2[i] = t>>8;
+						CartridgeC->TestCardThree.CO2_2[i] = 0x00ffffff&(t>>8);
 					  count[7]++;
 					  SW_TEST_config(SW_A3);
 					  break;
 					case 10:
-						CartridgeC->TestCardThree.glu[i] = t>>8;
+						CartridgeC->TestCardThree.glu[i] = 0x00ffffff&(t>>8);
 					  count[8]++;
 					  SW_TEST_config(SW_A4);
 					  break;
 					case 11:
-						CartridgeC->TestCardThree.pO2[i] = t>>8;
+						CartridgeC->TestCardThree.pO2[i] = 0x00ffffff&(t>>8);
 					  count[9]++;
 					  SW_TEST_config(SW_A5);
 					  break;
 					case 12:
-						CartridgeC->TestCardThree.Lac[i] = t>>8;
+						CartridgeC->TestCardThree.Lac[i] = 0x00ffffff&(t>>8);
 					  count[10]++;
 					  SW_TEST_config(SW_P1);
 					  break;
