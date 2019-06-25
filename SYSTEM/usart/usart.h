@@ -57,7 +57,7 @@ void Uart2Init(u32 bound);
 void Uart4Init(u32 bound);
 
 
-extern void MyUartSend(u8 port,char buf[],u8 len);
+extern void MyUartSend(u8 port,char buf[],int len);
 extern void UartInit(void);
 #endif
 

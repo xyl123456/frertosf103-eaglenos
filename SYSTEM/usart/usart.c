@@ -57,9 +57,9 @@ void UartInit(){
 }
 
 //串口发送函数
-void MyUartSend(u8 port,char buf[],u8 len)
+void MyUartSend(u8 port,char buf[],int len)
 {
-	u8 t;
+	int t;
 	
 	for(t=0;t<len;t++)
 	{
@@ -287,8 +287,7 @@ void USART2_IRQHandler(void)                	//串口2中断服务程序
 //		}
 			resData =USART_ReceiveData(USART2);
 			uart2RxBuf[uart2RxSta++]=resData;
-	 }
-		else if(USART_GetFlagStatus(USART2,USART_FLAG_IDLE)!=Bit_RESET)
+	 }else if(USART_GetFlagStatus(USART2,USART_FLAG_IDLE)!=Bit_RESET)
 		{
 			resData=USART2->SR;
 			resData=USART2->DR;

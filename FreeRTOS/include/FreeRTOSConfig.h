@@ -97,7 +97,7 @@
 #define configCPU_CLOCK_HZ						(SystemCoreClock)       //CPU频率
 #define configTICK_RATE_HZ						(1000)                  //时钟节拍频率，这里设置为1000，周期就是1ms
 #define configMAX_PRIORITIES					(32)                    //可使用的最大优先级
-#define configMINIMAL_STACK_SIZE				((unsigned short)80)   //空闲任务使用的堆栈大小 add by xyl 130
+#define configMINIMAL_STACK_SIZE				((unsigned short)130)   //空闲任务使用的堆栈大小 add by xyl 130
 #define configMAX_TASK_NAME_LEN					(20)                    //任务名字字符串长度
 
 #define configUSE_16_BIT_TICKS					0                       //系统节拍计数器变量数据类型，
@@ -178,7 +178,7 @@
 #endif
 
 #define configLIBRARY_LOWEST_INTERRUPT_PRIORITY			15                      //中断最低优先级
-#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY	3                      //系统可管理的最高中断优先级
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY	5                      //系统可管理的最高中断优先级
 #define configKERNEL_INTERRUPT_PRIORITY 		( configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY 	( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
 

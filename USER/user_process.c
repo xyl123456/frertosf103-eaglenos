@@ -19,18 +19,39 @@ History:
 #include "max6675.h"
 #include "timer.h"
 
-
 #include "DetectBoard.h"
 
 uint8_t startScanFlag=0;
 uint8_t heatSendMessageFlag=0;
 
+
+
+int sensorCnt=0;
+
 uint8_t heatBodyFlag=0;
 float setingTempValue=0;
 
-int numb[5]={0x7FFFFF00,3333,5555,6666,888};
+TestCard_One 			testCardOne;
+TestCard_Two 			testCardTwo;
+TestCard_Three 			testCardThree;
+
+//int numb[5]={0x7FFFFF00,3333,5555,6666,888};
 extern TaskHandle_t MessageProcessTask_Handler;	//通知处理句柄
 uint32_t systemState;//系统状态检测变量
+
+void ScanSensorTime(void)
+{
+	if(startScanFlag==1){
+		sensorCnt++;
+	}else{
+		sensorCnt=0;
+	}
+	if(sensorCnt==20){
+		//超时，需要关闭扫码头
+		startScanFlag=0;
+		SCANCODEKEY=1;
+	}
+}
 
 /*
 * @Description：启动扫码设备
@@ -40,9 +61,11 @@ uint32_t systemState;//系统状态检测变量
 void StartScanCode()
 {
 	startScanFlag=1;
-	SCANCODEKEY=0;
-	vTaskDelay(1000/portTICK_PERIOD_MS);
 	SCANCODEKEY=1;
+	SCANCODEKEY=0;
+	//vTaskDelay(10000/portTICK_PERIOD_MS);
+	//SCANCODEKEY=1;
+
 }
 
 /*
@@ -52,6 +75,7 @@ void StartScanCode()
 */
 void StopScanCode()
 {
+	startScanFlag=0;
 	SCANCODEKEY=1;
 }
 
@@ -84,11 +108,11 @@ void ScanHeatingTemp(void)
 	float reactionTempValue;//heatingTempValue;
 	if(heatBodyFlag==1){
 		reactionTempValue = Max6675_readTemperature(1);//反应区
-		printf("the temp is %.2f\n",reactionTempValue);
+		//printf("the temp is %.2f\n",reactionTempValue);
 		//HeatingTempValue = Max6675_readTemperature(2);//加热区
 		if(reactionTempValue>=setingTempValue){
 			TIM_SetCompare3(TIM3,10000);//输出占空比0%
-			heatBodyFlag=0;//检测完成置标志位
+			//heatBodyFlag=0;//检测完成置标志位,检测温度会一直处于维持温度中
 			if(heatSendMessageFlag==0){
 				heatSendMessageFlag=1;
 			//发送消息ERR_TEST_PREPARE_SUCCESS
@@ -98,6 +122,8 @@ void ScanHeatingTemp(void)
 				}
 			}else{
 				heatSendMessageFlag=0;
+				//加热
+				TIM_SetCompare3(TIM3,5000);
 			}
 		}
 }
@@ -221,8 +247,16 @@ void StartHeatBody(float tempValue)
 		vTaskDelay(1000/portTICK_PERIOD_MS);	
 	
 }
-
-
+/*extern 停止加热函数
+* @Description：stop Heat
+* @para ：void
+* @return void
+*/
+void StopHeatBody(void)
+{
+	heatBodyFlag=0;
+	TIM_SetCompare3(TIM3,10000);//
+}
 
 
 /*extern 函数
@@ -230,19 +264,9 @@ void StartHeatBody(float tempValue)
 * @para ：void*buf
 * @return void
 */
-void SendSampleCollect(uint8_t sort ,void *buf)
+void SendSampleCollect(uint8_t sort)
 {
 	uint8_t i=sort;
-	int cnt_i;
-	TestCard_One 			testCardOne;
-	TestCard_Two 			testCardTwo;
-	TestCard_Three 		testCardThree;
-	int MgInt[Apoints];
-	int CaInt[Apoints];
-	int KInt[Apoints];
-	int NaInt[Apoints];
-	int ClInt[Apoints];
-	
 	int len;
 	char *out;
 	//封装JSON数据
@@ -254,32 +278,19 @@ void SendSampleCollect(uint8_t sort ,void *buf)
 	
 	switch(i){
 		case 1:
-			mymemcpy(testCardOne.buffer,buf,sizeof(buf));
 			cJSON_AddItemToObject(cjson_message, CMD_VAL, mes_data = cJSON_CreateArray());
 			cJSON_AddItemToArray(mes_data, data_item=cJSON_CreateObject());
-		for(cnt_i=0;cnt_i<5;cnt_i++){
-			MgInt[cnt_i]=(testCardOne.TestCardOne.iMg[cnt_i]>>8)&0xFFFFFFFF;
-			CaInt[cnt_i]=(testCardOne.TestCardOne.iCa[cnt_i]>>8)&0xFFFFFFFF;
-			KInt[cnt_i]=(testCardOne.TestCardOne.K[cnt_i]>>8)&0xFFFFFFFF;
-			NaInt[cnt_i]=(testCardOne.TestCardOne.Na[cnt_i]>>8)&0xFFFFFFFF;
-			ClInt[cnt_i]=(testCardOne.TestCardOne.Cl[cnt_i]>>8)&0xFFFFFFFF;
-		}
-		
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_IMG, cJSON_CreateIntArray(MgInt,Apoints));
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CA, cJSON_CreateIntArray(CaInt,Apoints));
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_K, cJSON_CreateIntArray(KInt,Apoints));
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_NA, cJSON_CreateIntArray(NaInt,Apoints));
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CL, cJSON_CreateIntArray(ClInt,Apoints));
-		
-		
-		 //cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CL, cJSON_CreateIntArray(numb,5));
-		
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_IMG, cJSON_CreateIntArray(testCardOne.TestCardOne.iMg,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CA, cJSON_CreateIntArray(testCardOne.TestCardOne.iCa,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_K, cJSON_CreateIntArray(testCardOne.TestCardOne.K,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_NA, cJSON_CreateIntArray(testCardOne.TestCardOne.Na,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CL, cJSON_CreateIntArray(testCardOne.TestCardOne.Cl,Apoints));
 			break;
 		case 2:
-			mymemcpy(testCardTwo.buffer,buf,sizeof(buf));
+			//mymemcpy(testCardTwo.buffer,buf,sizeof(buf));
 			break;
 		case 3:
-			mymemcpy(testCardThree.buffer,buf,sizeof(buf));
+			//mymemcpy(testCardThree.buffer,buf,sizeof(buf));
 			break;
 		case 4:
 			//mymemcpy(testCardTwo.buffer,buf,sizeof(buf));
@@ -293,6 +304,7 @@ void SendSampleCollect(uint8_t sort ,void *buf)
 	
 	out = cJSON_PrintUnformatted(cjson_message);
 	len=strlen(out);
+	
 	MyUartSend(UART1_PORT,out,len);
 	free(out);
 	cJSON_Delete(cjson_message);
@@ -325,7 +337,7 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 		}
 	}
 	//扫描功能
-	if(mymemcmp(keyString,CMD_TEST_VAL_SCAN_CARD,strlen(CMD_TEST_VAL_SCAN_CARD))==0){
+	if(mymemcmp(keyString,CMD_TEST_VAL_SCAN,strlen(CMD_TEST_VAL_SCAN))==0){
 		if(mymemcmp(valueString,"on",2)==0){
 			StartScanCode();
 		}else{
@@ -352,10 +364,27 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 		tempValue=atof(valueString);
 		StartHeatBody((float)tempValue);
 	}
+	//加热控制命令
+		if(mymemcmp(keyString,CMD_TEST_VAL_ON_OFF_HEAT,strlen(CMD_TEST_VAL_ON_OFF_HEAT))==0){
+			//开启加热
+			if(mymemcmp(valueString,"on",2)==0){
+				StartHeatBody(setingTempValue);
+				xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
+									(uint32_t)ERR_TEST_START_HEAT_SUCCESS,
+									(eNotifyAction)eSetBits);	
+			}
+			if(mymemcmp(valueString,"off",3)==0){
+				//停止加热
+				StopHeatBody();
+				xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
+									(uint32_t)ERR_TEST_STOP_HEAT_SUCCESS,
+									(eNotifyAction)eSetBits);
+			}
+
+		}
 	//样品采集命令
 	if(mymemcmp(keyString,CMD_TEST_VAL_COLLECT,strlen(CMD_TEST_VAL_COLLECT))==0){
-		if(mymemcmp(valueString,CMD_TEST_CARD_ONE,strlen(CMD_TEST_CARD_ONE))==0){
-			TestCard_One testCardOne;
+		if(mymemcmp(valueString,CMD_TEST_CARD_A,strlen(CMD_TEST_CARD_A))==0){
 			int8_t sampleCollectState;
 			sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);
 			if(sampleCollectState!=0)
@@ -366,23 +395,25 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 									(eNotifyAction)eSetBits);
 			}else{
 			//发送数据
-			SendSampleCollect(SAMPLE_COLLECT_CARD_ONE,testCardOne.buffer);
+			SendSampleCollect(SAMPLE_COLLECT_CARD_ONE);
 			}
 		}
-		if(mymemcmp(valueString,CMD_TEST_CARD_TWO,strlen(CMD_TEST_CARD_TWO))==0){
-			TestCard_Two testCardTwo;
+		if(mymemcmp(valueString,CMD_TEST_CARD_B,strlen(CMD_TEST_CARD_B))==0){
+			
 			DetectBoard_GetCartridgeBData(&testCardTwo);
 		}
-		if(mymemcmp(valueString,CMD_TEST_CARD_THREE,strlen(CMD_TEST_CARD_THREE))==0){
-			TestCard_Three testCardThree;
+		if(mymemcmp(valueString,CMD_TEST_CARD_C,strlen(CMD_TEST_CARD_C))==0){
+			
 			DetectBoard_GetCartridgeCData(&testCardThree); 
 		}
-		if(mymemcmp(valueString,CMD_TEST_CARD_FOUR,strlen(CMD_TEST_CARD_FOUR))==0){
+		/*
+		if(mymemcmp(valueString,CMD_TEST_CARD_A,strlen(CMD_TEST_CARD_A))==0){
 			
 		}
-		if(mymemcmp(valueString,CMD_TEST_CARD_FIVE,strlen(CMD_TEST_CARD_FIVE))==0){
+		if(mymemcmp(valueString,CMD_TEST_CARD_A,strlen(CMD_TEST_CARD_A))==0){
 			
 		}
+		*/
 	}
 	//打印命令
 	if(mymemcmp(keyString,CMD_TEST_VAL_PRINT,strlen(CMD_TEST_VAL_PRINT))==0){
@@ -395,7 +426,7 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 * @para ：void
 * @return 无
 */
-void Uart1Process(char *uartMemary,u8 uartLen)
+void Uart1Process(char *uartMemary,int uartLen)
 {
 	cJSON *root;
 	root = cJSON_Parse(uartMemary);
@@ -481,7 +512,7 @@ void Uart1Process(char *uartMemary,u8 uartLen)
 * @para ：char *uartMemary,u8 uartLen
 * @return 无
 */
-void Uart2Process(char *uartMemary,u8 uartLen)
+void Uart2Process(char *uartMemary,int uartLen)
 {
 	int len;
 	char *out;
@@ -498,6 +529,7 @@ void Uart2Process(char *uartMemary,u8 uartLen)
 	len=strlen(out);
 	if(startScanFlag==1){
 		MyUartSend(UART1_PORT,out,len);
+		SCANCODEKEY=1;
 		startScanFlag=0;
 	}
 	free(out);
@@ -513,7 +545,7 @@ void Uart2Process(char *uartMemary,u8 uartLen)
 * @para ：void
 * @return 无
 */
-void UartProcess(u8 uartPort,char *uartMemary,u8 uartLen)
+void UartProcess(u8 uartPort,char *uartMemary,int uartLen)
 {
 	switch(uartPort)
 	{
@@ -589,6 +621,14 @@ void MessageProcess(uint32_t NotifyValue)
 		/*预加热处理任务成功*/
 		case ERR_TEST_PREPARE_SUCCESS:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Pre test Success");
+			break;
+		/*开始加热返回消息*/
+		case ERR_TEST_START_HEAT_SUCCESS:
+			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Heat on Success");
+			break;
+		/*停止加热返回消息*/
+		case ERR_TEST_STOP_HEAT_SUCCESS:
+			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Heat off Success");
 			break;
 		case ERR_TEST_HEAT_SUCCESS:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Heat to set value");

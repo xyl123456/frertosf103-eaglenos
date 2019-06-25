@@ -29,7 +29,7 @@ History:
 //任务优先级
 #define START_TASK_PRIO		1
 //任务堆栈大小	
-#define START_STK_SIZE 		128  
+#define START_STK_SIZE 		512 
 //任务句柄
 TaskHandle_t StartTask_Handler;
 //任务函数
@@ -52,7 +52,7 @@ void timercontrol_task(void *pvParameters);
 
 //消息处理任务
 #define MESSAGEPROCESS_TASK_PRIO		4
-#define MESSAGEPROCESS_STK_SIZE 		1024
+#define MESSAGEPROCESS_STK_SIZE 		512
 TaskHandle_t MessageProcessTask_Handler;
 void messageprocess_task(void *pvParameters);
 
@@ -142,6 +142,7 @@ void timercontrol_task(void *pvParameters)
 //周期定时器的回调函数
 void AutoReloadCallback(TimerHandle_t xTimer)
 {
+	
 	if(CardCheckFlag==1){
 		//卡插到位了
 		xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
@@ -150,6 +151,7 @@ void AutoReloadCallback(TimerHandle_t xTimer)
 		CardCheckFlag=0;	
 	}
 	ScanHeatingTemp();
+	ScanSensorTime();
 	SYSLED=!SYSLED;
 }
 

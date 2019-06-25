@@ -76,8 +76,8 @@ int8_t DetectBoard_SelfCheck(void)
 		t=AD7124_ReadRawData(&ad7124Dev);
 		if(i==(t&0xf))
 			SC[i]=t>>8;
-		else
-			i--;
+		//else
+			//i--;
 		//delay_ms(10);	
 		//printf("AD7124 : %d\r\n",SC[i]);
 		//printf("CH : %d\r\n",i);
@@ -163,34 +163,36 @@ int8_t DetectBoard_GetCartridgeAData(TestCard_One * CartridgeA)
 				switch (j){
 					case 0:
 						CartridgeA->TestCardOne.iMg[i] =0x00ffffff&(t>>8);
-					  printf("CH:%d\r\n",j);
-					  printf("Value:%d\r\n",CartridgeA->TestCardOne.iMg[i]);
+					 //printf("CH:%d\r\n",j);
+					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.iMg[i]);
 					  count[0]++;
 					  break;
 					case 1:
 						CartridgeA->TestCardOne.iCa[i] = 0x00ffffff&(t>>8);
-					  printf("CH:%d\r\n",j);
-					  printf("Value:%d\r\n",CartridgeA->TestCardOne.iCa[i]);
+					 // printf("CH:%d\r\n",j);
+					// printf("Value:%d\r\n",CartridgeA->TestCardOne.iCa[i]);
 					  count[1]++;
 					  break;
 					case 2:
 						CartridgeA->TestCardOne.K[i] = 0x00ffffff&(t>>8);
-					  printf("CH:%d\r\n",j);
-					  printf("Value:%d\r\n",CartridgeA->TestCardOne.K[i]);
+					//  printf("CH:%d\r\n",j);
+					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.K[i]);
 					  count[2]++;
 					  break;
 					case 3:
 						CartridgeA->TestCardOne.Na[i] = 0x00ffffff&(t>>8);
-					  printf("CH:%d\r\n",j);
-					  printf("Value:%d\r\n",CartridgeA->TestCardOne.Na[i]);
+					//  printf("CH:%d\r\n",j);
+					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.Na[i]);
 					  count[3]++;
 					  break;
 					case 5:
 						CartridgeA->TestCardOne.Cl[i] = 0x00ffffff&(t>>8);
-					  printf("CH:%d\r\n",j);
-					  printf("Value:%d\r\n",CartridgeA->TestCardOne.Cl[i]);
+					//  printf("CH:%d\r\n",j);
+					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.Cl[i]);
 					  count[4]++;
 					  break;
+					default:
+						break;
 				}	
 			}else	
 			{
@@ -264,10 +266,12 @@ int8_t DetectBoard_GetCartridgeBData(TestCard_Two * CartridgeB)
 					  count[5]++;
 					  SW_TEST_config(SW_P1);
 					  break;
+					default:
+						break;
 				}	
 			}
-			else	
-			  j--;	
+			//else	
+			  //j--;	
 		  //delay_ms(10);	
 		}
 	  //delay_ms(10);	
@@ -355,10 +359,12 @@ int8_t DetectBoard_GetCartridgeCData(TestCard_Three * CartridgeC)
 					  count[10]++;
 					  SW_TEST_config(SW_P1);
 					  break;
+					default:
+						break;
 				}	
 			}
-			else	
-			  j--;	
+			//else	
+			 // j--;	
 		  //delay_ms(10);	
 		}
 	  //delay_ms(10);	

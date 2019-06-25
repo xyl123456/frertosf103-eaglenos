@@ -16,13 +16,16 @@
 #define SAMPLE_COLLECT_CARD_FOUR     4
 #define SAMPLE_COLLECT_CARD_FIVE     5
 
-void Uart1Process(char *uartMemary,u8 uartLen);
+void Uart1Process(char *uartMemary,int uartLen);
 void ProcessValueKeyDate(char *keyString,char *valueString);
 
-void Uart2Process(char *uartMemary,u8 uartLen);
+void Uart2Process(char *uartMemary,int uartLen);
 
 void CardCheckInit(void);
 void HeatInit(void);
+void StopHeatBody(void);
+
+void ScanSensorTime(void);
  
 uint32_t SelfTestProcess(void);
 uint32_t IntialProcess(void);
@@ -31,11 +34,11 @@ uint32_t ScanCodeInit(void);
 uint32_t PreTestProcess(void);
 void StartHeatBody(float tempValue);
  
-void SendSampleCollect(uint8_t sort ,void *buf);
+void SendSampleCollect(uint8_t sort);
  
 extern void HalBoardInit(void);
 extern void MessageProcess(uint32_t NotifyValue);
-extern void UartProcess(u8 uartPort,char *uartMemary,u8 uartLen);
+extern void UartProcess(u8 uartPort,char *uartMemary,int uartLen);
 
 extern void ScanHeatingTemp(void);
 #ifdef __cplusplus

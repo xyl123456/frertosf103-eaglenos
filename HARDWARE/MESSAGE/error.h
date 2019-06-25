@@ -6,8 +6,8 @@ Date:          2019-06-10
 Description:   错误码,参考血液生化分析仪软件系统设计_v1.0_0610 异常处理章节
 History:
 ***********************************************************************************/
-#ifndef __ERROR_H
-#define __ERROR_H
+#ifndef __ERR_H
+#define __ERR_H
 
 enum ERR_CODE
 {
@@ -40,8 +40,8 @@ enum ERR_CODE
     ERR_SELFTEST_POTENTIO,              // 电压自检失败    
     ERR_SELFTEST_AMPERO,                // 电流自检失败    
     ERR_SELFTEST_IMPEDANCE,             // 电阻自检失败
-		ERR_SELFTEST_ERROR,                 //自检失败
-											
+	ERR_SELFTEST_ERROR,                 // 自检失败
+                                        // 可在这里扩展初自检错误代码
 
     /*登陆*/
     ERR_LOGIN_SUCCESS = 400,             // 登陆成功
@@ -50,24 +50,28 @@ enum ERR_CODE
     ERR_LOGIN_PWD_ERR,                   // 密码错误
                                          // 可在这里扩展登陆错误代码
 
-    /*样本检测*/
+    /*样本检测 500-520代表正常状态*/
     ERR_TEST_SUCCESS = 500,
-    ERR_TEST_HAVE_RESIDUE_SOLUTION,      // 检测卡有残留液体，无法检测
+    ERR_TEST_SCAN_SUCCESS,               // 扫描成功
+	  ERR_TEST_HEAT_SUCCESS,               // 加热到到指定温度
+	  ERR_TEST_CARD_INSERT_SUCCESS,        // 插卡成功
+	  ERR_TEST_PREPARE_SUCCESS,			 // 准备已经完成，测试前准备完成
+    ERR_TEST_COLLECT_SUCCESS,			 // 收集数据成功
+		ERR_TEST_START_HEAT_SUCCESS,    // 开始加热
+		ERR_TEST_STOP_HEAT_SUCCESS,		 //停止加热
+										 // 样本检测流程的成功状态在这里添加，注意不要超过520
+    /*样本检测 521-599代表异常状态*/
+	ERR_TEST_GET_VALUE = 521,            // 读取检测卡信息失败
+	ERR_TEST_HAVE_RESIDUE_SOLUTION,      // 检测卡有残留液体，无法检测
     ERR_TEST_MOTOR_PUSH,                 // 电机推动失败
     ERR_TEST_HEAT,                       // 加热异常
-		ERR_TEST_HEAT_SUCCESS,               // 加热到到指定温度
+	ERR_TEST_PREPARE_ERROR,				 //测试前准备失败
     ERR_TEST_INSERT_CARD_TOUT,           // 等待插入测试卡超时
-    ERR_TEST_HAS_CARD,                   // 已经有卡
-		ERR_TEST_SAMPLE_COLLECT_ERR,         //样品测试检测失败
-		
-		/*插卡成功*/
-		ERR_TEST_CARD_INSERT_SUCCESS,                   //卡插入成功
-		
-		/*测试准备完成*/
-		ERR_TEST_PREPARE_SUCCESS,						//准备已经完成，测试前准备完成
-		ERR_TEST_PREPARE_ERROR,							//测试前准备失败
-
-		ERR_TEST_GET_VALUE,                  //读取检测卡信息失败
+    ERR_TEST_SAMPLE_COLLECT_ERR,         // 样品检测AD采集数据失败
+    ERR_TEST_HAS_CARD,                   // 已经有卡，请取卡
+    ERR_TEST_CARD_INFO,                  // 扫描测试卡信息错误，如扫了病人条形码
+    ERR_TEST_CARD_OUT_OF_DATE,           // 测试卡过期
+    ERR_TEST_PID_INFO,                   // 扫描病人条码错误
                                          // 可在这里扩展样品检测错误代码
     /*质控*/
     ERR_QC_SUCCESS = 600,             
@@ -91,3 +95,5 @@ enum ERR_CODE
 };
 
 #endif
+/********************************** End of file ***********************************/
+
