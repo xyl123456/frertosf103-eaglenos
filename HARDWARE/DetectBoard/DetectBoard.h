@@ -80,5 +80,7 @@ int8_t DetectBoard_GetCartridgeAData(TestCard_One * CartridgeA); //<1s
  
 int8_t DetectBoard_GetCartridgeBData(TestCard_Two * CartridgeB); //<1s
 int8_t DetectBoard_GetCartridgeCData(TestCard_Three * CartridgeC);  //<2s
+ 
+void DetectBoardResetAll(void);//复位所有状态，需要在测试完成以后调用
 
 #endif /* __DETECTBOARD_H__ */

@@ -57,6 +57,13 @@ TaskHandle_t MessageProcessTask_Handler;
 void messageprocess_task(void *pvParameters);
 
 
+//事件处理任务
+#define EVENTPROCESS_TASK_PRIO		5
+#define EVENTPROCESS_STK_SIZE 		512
+TaskHandle_t EventProcessTask_Handler;
+void eventprocess_task(void *pvParameters);
+
+
 TimerHandle_t  AutoReloadTimer_Handle;	//周期性定时器
 
 void AutoReloadCallback(TimerHandle_t xTimer); 	//周期定时器回调函数
@@ -120,7 +127,13 @@ void start_task(void *pvParameters)
                 (void*          )NULL,		
                 (UBaseType_t    )MESSAGEPROCESS_TASK_PRIO,	
                 (TaskHandle_t*  )&MessageProcessTask_Handler); 
-		
+		//创建事件处理任务
+		xTaskCreate((TaskFunction_t )eventprocess_task,     	
+                (const char*    )"eventprocess_task",   	
+                (uint16_t       )EVENTPROCESS_STK_SIZE, 
+                (void*          )NULL,		
+                (UBaseType_t    )EVENTPROCESS_TASK_PRIO,	
+                (TaskHandle_t*  )&EventProcessTask_Handler); 
 								
     vTaskDelete(StartTask_Handler); //删除开始任务
     taskEXIT_CRITICAL();            //退出临界区
@@ -142,7 +155,6 @@ void timercontrol_task(void *pvParameters)
 //周期定时器的回调函数
 void AutoReloadCallback(TimerHandle_t xTimer)
 {
-	
 	if(CardCheckFlag==1){
 		//卡插到位了
 		xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
@@ -150,8 +162,9 @@ void AutoReloadCallback(TimerHandle_t xTimer)
 									(eNotifyAction)eSetBits);
 		CardCheckFlag=0;	
 	}
+	ScanSensorTime();//
 	ScanHeatingTemp();
-	ScanSensorTime();
+	ScanImpedance();//实时测试阻抗函数
 	SYSLED=!SYSLED;
 }
 
@@ -211,6 +224,24 @@ void messageprocess_task(void *pvParameters)
 			MessageProcess(NotifyValue);
 		}else{
 			//获取错误信息失败
+		}
+	}
+}
+
+//事件处理函数，主要处理延时的任务
+void eventprocess_task(void *pvParameters)
+{
+	uint32_t NotifyValue;
+	BaseType_t err;
+	while(1){
+		err=xTaskNotifyWait((uint32_t)0x00,
+							(uint32_t)ULONG_MAX,
+							(uint32_t*)&NotifyValue,
+							(TickType_t)portMAX_DELAY);
+		if(err==pdPASS)
+		{
+			EventProcess(NotifyValue);
+		}else{
 		}
 	}
 }

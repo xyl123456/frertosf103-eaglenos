@@ -34,6 +34,8 @@ History:
 #define      CMD_MSG                            "msg"                  //消息说明
 #define      CMD_TYPE                           "type"                 //命令类型：样本检测、QC、设置、数据管理
 #define      CMD_VAL                            "value"                //命令参数
+#define      CMD_VACUOLE_VAL										"vacuole_value"				 //定标液参数
+#define      CMD_SAMPLE_VAL										  "sample_value"         //采样参数		
 
 /*消息值*/
 #define      CMD_MSG_SUCCESS                    "success" 

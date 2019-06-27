@@ -55,17 +55,18 @@ enum ERR_CODE
     ERR_TEST_SCAN_SUCCESS,               // 扫描成功
 	  ERR_TEST_HEAT_SUCCESS,               // 加热到到指定温度
 	  ERR_TEST_CARD_INSERT_SUCCESS,        // 插卡成功
-	  ERR_TEST_PREPARE_SUCCESS,			 // 准备已经完成，测试前准备完成
-    ERR_TEST_COLLECT_SUCCESS,			 // 收集数据成功
-		ERR_TEST_START_HEAT_SUCCESS,    // 开始加热
-		ERR_TEST_STOP_HEAT_SUCCESS,		 //停止加热
+	  ERR_TEST_PREPARE_SUCCESS,			 			 // 准备已经完成，测试前准备完成
+    ERR_TEST_COLLECT_SUCCESS,			 			 // 收集数据成功
+		ERR_TEST_START_HEAT_SUCCESS,    		 // 开始加热
+		ERR_TEST_STOP_HEAT_SUCCESS,		 			 //停止加热
 										 // 样本检测流程的成功状态在这里添加，注意不要超过520
     /*样本检测 521-599代表异常状态*/
 	ERR_TEST_GET_VALUE = 521,            // 读取检测卡信息失败
 	ERR_TEST_HAVE_RESIDUE_SOLUTION,      // 检测卡有残留液体，无法检测
     ERR_TEST_MOTOR_PUSH,                 // 电机推动失败
+		ERR_TEST_BREAK_MOTOR,               //刺破液包电机
     ERR_TEST_HEAT,                       // 加热异常
-	ERR_TEST_PREPARE_ERROR,				 //测试前准备失败
+	ERR_TEST_PREPARE_ERROR,				         //测试前准备失败
     ERR_TEST_INSERT_CARD_TOUT,           // 等待插入测试卡超时
     ERR_TEST_SAMPLE_COLLECT_ERR,         // 样品检测AD采集数据失败
     ERR_TEST_HAS_CARD,                   // 已经有卡，请取卡

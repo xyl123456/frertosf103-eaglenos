@@ -21,36 +21,45 @@ History:
 
 #include "DetectBoard.h"
 
-uint8_t startScanFlag=0;
-uint8_t heatSendMessageFlag=0;
+/*标志位，用于标记对应事件发生*/
+uint8_t startScanFlag=0;										//用于扫描头启动事件标记
+uint8_t heatSendMessageFlag=0;							//加热事件消息发送
+uint8_t startBreakVacyoleFlag=0;						//刺破液包事件标志
+uint8_t startTestVacyoleFlag=0;							//检测标液体事件标志
+
+uint8_t startTestSampleFlag=0;              //检测样品液事件标志
 
 
+uint8_t startCheckImpedance=0;             //开启实时检测阻抗标志
+
+uint8_t preTestFlag=0;
+uint8_t heatBodyFlag=0;
 
 int sensorCnt=0;
-
-uint8_t heatBodyFlag=0;
 float setingTempValue=0;
 
 TestCard_One 			testCardOne;
 TestCard_Two 			testCardTwo;
-TestCard_Three 			testCardThree;
+TestCard_Three 		testCardThree;
 
-//int numb[5]={0x7FFFFF00,3333,5555,6666,888};
+
 extern TaskHandle_t MessageProcessTask_Handler;	//通知处理句柄
 uint32_t systemState;//系统状态检测变量
 
+extern TaskHandle_t EventProcessTask_Handler;
 void ScanSensorTime(void)
 {
-	if(startScanFlag==1){
-		sensorCnt++;
-	}else{
-		sensorCnt=0;
-	}
-	if(sensorCnt==20){
-		//超时，需要关闭扫码头
-		startScanFlag=0;
-		SCANCODEKEY=1;
-	}
+	//启动扫描功能,超时发送关闭功能
+			if(startScanFlag==1){
+				sensorCnt++;
+				}else{
+				sensorCnt=0;
+				}
+			if(sensorCnt==20){
+				sensorCnt=0;
+				//超时，需要关闭扫码头
+				StopScanCode();
+			}
 }
 
 /*
@@ -73,7 +82,7 @@ void StartScanCode()
 * @para ：void
 * @return void
 */
-void StopScanCode()
+void StopScanCode(void)
 {
 	startScanFlag=0;
 	SCANCODEKEY=1;
@@ -99,6 +108,66 @@ uint32_t ScanCodeInit(void)
 }
 
 /*
+* @Description：判断液体是否到位
+* @para ：void
+* @return uint8_t 1表示成功，0表示失败
+*/
+uint8_t TestImpedanceIsOk(void){
+		return 1;//测试功能函数
+	/*
+		int8_t inImpedance,outImpedance;
+	
+	//插破液包以后检测电阻值,0为液体到位，1为液体未到位
+		inImpedance=DetectBoard_Check_R1();
+		outImpedance=DetectBoard_Check_R2();
+		if((inImpedance==0)&&(outImpedance==0)){
+			//液体到位
+			return 1;
+		}else{
+			return 0;
+		}
+	*/
+}
+
+
+/*
+* @Description：实时检测阻抗函数
+* @para ：void
+* @return 无
+*/
+void ScanImpedance(void)
+{
+	//1为停止测试阻抗，0为开始测试阻抗
+	if(startCheckImpedance==1){
+		return ;
+	}
+	//已经刺破液包了，开始检测阻抗
+	if(startBreakVacyoleFlag==1){
+		if(TestImpedanceIsOk()==1){
+			//发送开始检测命令，在事件处理任务函数中处理相应的数据消息
+			
+			if(startTestVacyoleFlag==0){
+				startTestVacyoleFlag=1;
+				//发送消息处理检测标液数据
+				xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
+					(uint32_t)EVENT_TEST_VACUOLE_START,
+					(eNotifyAction)eSetBits);
+			}
+			
+			//发送检测样品液数据消息
+			if(startTestSampleFlag==1){
+				startTestSampleFlag=0;
+			
+			xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
+						(uint32_t)EVENT_TEST_SAMPLE_START,
+						(eNotifyAction)eSetBits);	
+			}
+			
+		}
+	}
+}
+
+/*
 * @Description：实时检测温度函数
 * @para ：void
 * @return 无
@@ -114,18 +183,30 @@ void ScanHeatingTemp(void)
 			TIM_SetCompare3(TIM3,10000);//输出占空比0%
 			//heatBodyFlag=0;//检测完成置标志位,检测温度会一直处于维持温度中
 			if(heatSendMessageFlag==0){
+				//发送消息ERR_TEST_PREPARE_SUCCESS
 				heatSendMessageFlag=1;
-			//发送消息ERR_TEST_PREPARE_SUCCESS
-			xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
+				/*
+				xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
 									(uint32_t)ERR_TEST_HEAT_SUCCESS,
 									(eNotifyAction)eSetBits);
-				}
+				*/
+				//开始刺破液包
+				//发送刺破液包的消息
+				xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
+					(uint32_t)EVENT_BREAK_VACUOLE,
+					(eNotifyAction)eSetBits);
+			  }
 			}else{
-				heatSendMessageFlag=0;
 				//加热
 				TIM_SetCompare3(TIM3,5000);
 			}
+
+
+				
+			
+				
 		}
+	
 }
 
 /*
@@ -258,13 +339,12 @@ void StopHeatBody(void)
 	TIM_SetCompare3(TIM3,10000);//
 }
 
-
 /*extern 函数
 * @Description：发送检测到的数据
-* @para ：void*buf
+* @para ：uint8_t sort---卡的种类,uint8_t VacuoleId---样品(1)还是标液(1)
 * @return void
 */
-void SendSampleCollect(uint8_t sort)
+void SendSampleCollect(uint8_t sort,uint8_t vacuoleId)
 {
 	uint8_t i=sort;
 	int len;
@@ -278,7 +358,11 @@ void SendSampleCollect(uint8_t sort)
 	
 	switch(i){
 		case 1:
-			cJSON_AddItemToObject(cjson_message, CMD_VAL, mes_data = cJSON_CreateArray());
+			if(vacuoleId==0){
+			cJSON_AddItemToObject(cjson_message, CMD_VACUOLE_VAL, mes_data = cJSON_CreateArray());
+			}else{
+			cJSON_AddItemToObject(cjson_message, CMD_SAMPLE_VAL, mes_data = cJSON_CreateArray());
+			}
 			cJSON_AddItemToArray(mes_data, data_item=cJSON_CreateObject());
 			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_IMG, cJSON_CreateIntArray(testCardOne.TestCardOne.iMg,Apoints));
 			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CA, cJSON_CreateIntArray(testCardOne.TestCardOne.iCa,Apoints));
@@ -309,8 +393,35 @@ void SendSampleCollect(uint8_t sort)
 	free(out);
 	cJSON_Delete(cjson_message);
 }
+/*压破液包 函数
+* @Description：执行压破液包的电机操作
+* @para ：void
+* @return void
+*/
+void BreakVacuole(void){
+	//标记刺破液包的标记为1
+	startBreakVacyoleFlag=1;
+	//
+}
 
+/*继续推加热片函数(推样品检测函数)
+* @Description：推样品检测函数
+* @para ：void
+* @return uint8_t ,error---0  success---1
+*/
+uint8_t PushVacuole(void){
+	return 1;
+}
 
+/*推加热片 函数
+* @Description：推加热片函数
+* @para ：void
+* @return uint8_t ,error---0  success---1
+*/
+uint8_t PushHeatCut(void){
+	
+	return 1;
+}
 
 /*extern 函数
 * @Description：获取测试卡的数值
@@ -351,18 +462,32 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 //		}
 //		
 //	}
-	
-	//样本检测前预处理命令功能，包含加热，推动电机等
+	//样本检测前预处理命令功能，包含刺破液包，推加热片，加热，推动电机压气囊等
 	if(mymemcmp(keyString,CMD_TEST_VAL_PRE_TEST,strlen(CMD_TEST_VAL_PRE_TEST))==0){
 		double tempValue;
+		uint8_t pushStatus;
+		tempValue=atof(valueString);
+		
+		if(preTestFlag==0){
 		//1.推加热片
-		//2.加热  class_value=1 为加热电机,
+		//2.刺破液包
+		//3.加热  class_value=1 为加热电机,
 		//int8_t MotorStart(uint8_t class_value,int angle,int speed);
 		//int8_t MotorStop(uint8_t class_value);
 		//开始加热
 		//StartHeatBody(float tempValue);
-		tempValue=atof(valueString);
-		StartHeatBody((float)tempValue);
+		
+		//推加热片
+		pushStatus=PushHeatCut();
+		if(pushStatus==1){
+			StartHeatBody((float)tempValue);
+		}else{
+			//发送电机失败消息，加热电机复原
+		}
+		
+	}
+		preTestFlag=1;//标记命令已经发送过，重复发送将不处理
+		
 	}
 	//加热控制命令
 		if(mymemcmp(keyString,CMD_TEST_VAL_ON_OFF_HEAT,strlen(CMD_TEST_VAL_ON_OFF_HEAT))==0){
@@ -385,18 +510,7 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 	//样品采集命令
 	if(mymemcmp(keyString,CMD_TEST_VAL_COLLECT,strlen(CMD_TEST_VAL_COLLECT))==0){
 		if(mymemcmp(valueString,CMD_TEST_CARD_A,strlen(CMD_TEST_CARD_A))==0){
-			int8_t sampleCollectState;
-			sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);
-			if(sampleCollectState!=0)
-			{
-				//数据检测错误,发送检测失败消息
-							xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
-									(uint32_t)ERR_TEST_SAMPLE_COLLECT_ERR,
-									(eNotifyAction)eSetBits);
-			}else{
-			//发送数据
-			SendSampleCollect(SAMPLE_COLLECT_CARD_ONE);
-			}
+				StartTestVacuole(CHECK_VACUOLE_TIMER);//
 		}
 		if(mymemcmp(valueString,CMD_TEST_CARD_B,strlen(CMD_TEST_CARD_B))==0){
 			
@@ -471,7 +585,6 @@ void Uart1Process(char *uartMemary,int uartLen)
 				//SET设置
 			}
 		}
-		
 		/*
 		if(parseValueDataLog==1){
 			char *typeSting = cJSON_GetObjectItem(root,"type")->valuestring;
@@ -529,16 +642,13 @@ void Uart2Process(char *uartMemary,int uartLen)
 	len=strlen(out);
 	if(startScanFlag==1){
 		MyUartSend(UART1_PORT,out,len);
-		SCANCODEKEY=1;
-		startScanFlag=0;
+		StopScanCode();
 	}
 	free(out);
 	//cJSON_Delete(mes_data);
 	//cJSON_Delete(data_item);
 	cJSON_Delete(cjson_message);
 }
-
-
 
 /*
 * @Description：数据处理函数
@@ -565,11 +675,159 @@ void UartProcess(u8 uartPort,char *uartMemary,int uartLen)
 }
 
 /*
-//{
-    "code":  200,
-    "messg":”success”,
-//}
+* @Description：开始检测标液函数，通过不断发送检测数据
+* @para ：void
+* @return 无
 */
+void 	StartTestVacuole(uint32_t second){
+			int8_t sampleCollectState;
+			uint32_t timeCnt;
+			
+			for(timeCnt=0;timeCnt<second;timeCnt++){
+				//sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);//注释以后调试
+					sampleCollectState=0;
+					if(sampleCollectState!=0)
+					{
+						//数据检测错误,发送检测失败消息
+						xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
+											(uint32_t)ERR_TEST_SAMPLE_COLLECT_ERR,
+											(eNotifyAction)eSetBits);
+								break;
+					}else{
+					//发送数据
+					SendSampleCollect(SAMPLE_COLLECT_CARD_ONE,TEST_VACUOLE_ID);
+					}
+				
+			}
+
+}
+
+/*
+* @Description：开始检测样品液的函数，通过不断发送检测数据
+* @para ：void
+* @return 无
+*/
+void  StartSampleVacuole(uint32_t second)
+{
+			int8_t sampleCollectState;
+			uint32_t timeCnt;
+			
+			for(timeCnt=0;timeCnt<second;timeCnt++){
+				//sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);//注释以后调试
+					sampleCollectState=0;
+					if(sampleCollectState!=0)
+					{
+						//数据检测错误,发送检测失败消息
+						xTaskNotify((TaskHandle_t)MessageProcessTask_Handler,
+											(uint32_t)ERR_TEST_SAMPLE_COLLECT_ERR,
+											(eNotifyAction)eSetBits);
+								break;
+					}else{
+					//发送数据
+					SendSampleCollect(SAMPLE_COLLECT_CARD_ONE,TEST_SAMPLE_ID);
+					}
+				
+			}
+}
+/*
+* @Description：复位加热电机外设
+* @para ：void
+* @return void
+*/
+void	ResectHeatMoto(void){
+	
+}
+/*
+* @Description：复位压破液包电机外设
+* @para ：void
+* @return void
+*/
+void	ResectBreakMoto(void){
+	
+}
+
+/*
+* @Description：复位所有外设
+* @para ：void
+* @return void
+*/
+void ResectAllDevice(void){
+	//清空各个标志位,主要是处理加热任务
+	/*标志位，用于标记对应事件发生*/
+	heatBodyFlag=0;
+	heatSendMessageFlag=0;							//加热事件消息发送
+	startBreakVacyoleFlag=0;						//刺破液包事件标志
+	
+	startTestVacyoleFlag=0;							//检测标液体事件标志
+	startTestSampleFlag=0;              //检测样品液事件标志
+	startCheckImpedance=0;             //开启实时检测阻抗标志
+	preTestFlag=0;
+
+	
+	ResectHeatMoto();
+	ResectBreakMoto();
+}
+
+/*
+* @Description：事件处理函数
+* @para ：void
+* @return 无
+*/
+void EventProcess(uint32_t NotifyValue){
+	uint32_t notifyValue;
+	notifyValue = NotifyValue;
+	switch(notifyValue)
+	{
+		//case EVENT_PUSH_HEAT_CUT:
+			//推加热片
+		//	break;
+		case EVENT_BREAK_VACUOLE:
+			//刺破液包
+			BreakVacuole();
+		 
+		  printf("break vacuole\r\n");
+			break;
+		case EVENT_PUSH_TEST_VACUOLE:
+			//继续推液包里面的检测体
+			PushVacuole();
+		  printf("continue push vacuole\r\n");
+		  //开启阻抗检测功能
+			startCheckImpedance=0;
+		  startTestSampleFlag=1;
+			break;
+		case EVENT_TEST_VACUOLE_START:
+			//开始检测标液
+		  printf("start check vacuole\r\n");
+			StartTestVacuole(CHECK_VACUOLE_TIMER);
+			DetectBoardResetAll();	
+			//停止电阻检测
+		  startCheckImpedance=1;
+		  //推样本检测液体
+			xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
+								(uint32_t)EVENT_PUSH_TEST_VACUOLE,
+								(eNotifyAction)eSetBits);
+			break;
+		case EVENT_TEST_SAMPLE_START:
+			//开始样本液的检测
+			printf("start check sample vacuole\r\n");
+			StartSampleVacuole(CHECK_SAMPLE_TIMER);
+		  //停止电阻检测
+			startCheckImpedance=1; 
+			xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
+								(uint32_t)EVENT_SAMPLE_TEST_RESECT,
+								(eNotifyAction)eSetBits);
+			break;
+		case EVENT_SAMPLE_TEST_RESECT:
+			//复位
+		  ResectAllDevice();
+			break;
+		default:
+			break;
+		
+	}
+}
+
+
 
 /*
 * @Description：消息处理函数
@@ -616,8 +874,10 @@ void MessageProcess(uint32_t NotifyValue)
 			break;
 		/*电机驱动错误*/
 		case ERR_TEST_MOTOR_PUSH:
+		case ERR_TEST_BREAK_MOTOR:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Motor Error");
 			break;
+		
 		/*预加热处理任务成功*/
 		case ERR_TEST_PREPARE_SUCCESS:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Pre test Success");
@@ -652,8 +912,6 @@ void MessageProcess(uint32_t NotifyValue)
 		default:
 			break;
 	}
-
-	
 	//cJSON_AddStringToObject(cjson_message, "type", "data");
 	//cJSON_AddItemToObject(cjson_message, "value", mes_data = cJSON_CreateArray());
 	//cJSON_AddItemToArray(mes_data, data_item=cJSON_CreateObject());

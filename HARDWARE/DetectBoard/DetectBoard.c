@@ -53,6 +53,17 @@ int8_t DetectBoard_Initial(void)
 	return ret;
 }
 
+
+
+/***********************************************************************************
+** @Description:信号板复位函数
+** @para :       void
+** @return       void  
+***********************************************************************************/
+void DetectBoardResetAll(void)
+{
+	SW_TEST_config(SW_SC);
+}
 /***********************************************************************************
 ** @Description:信号板自检函数
 ** @para :       void
@@ -120,6 +131,7 @@ int8_t DetectBoard_Check_R1(void)
 	/*液体到位判断*/
 	if(RI>30000)
 		ret=0;
+	SW_TEST_config(SW_SC);
 	return ret;
 }
 
@@ -134,6 +146,7 @@ int8_t DetectBoard_Check_R2(void)
 	/*液体到位判断*/
 	if(RI>30000)
 		ret=0;
+	SW_TEST_config(SW_SC);
 	return ret;
 }
 
