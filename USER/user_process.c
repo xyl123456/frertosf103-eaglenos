@@ -113,8 +113,8 @@ uint32_t ScanCodeInit(void)
 * @return uint8_t 1表示成功，0表示失败
 */
 uint8_t TestImpedanceIsOk(void){
-		return 1;//测试功能函数
-	/*
+		//return 1;//测试功能函数
+	
 		int8_t inImpedance,outImpedance;
 	
 	//插破液包以后检测电阻值,0为液体到位，1为液体未到位
@@ -126,7 +126,7 @@ uint8_t TestImpedanceIsOk(void){
 		}else{
 			return 0;
 		}
-	*/
+	
 }
 
 
@@ -177,7 +177,9 @@ void ScanHeatingTemp(void)
 	float reactionTempValue;//heatingTempValue;
 	if(heatBodyFlag==1){
 		reactionTempValue = Max6675_readTemperature(1);//反应区
-		//printf("the temp is %.2f\n",reactionTempValue);
+#if DBUG_TEST
+		printf("the temp is %.2f\n",reactionTempValue);
+#endif
 		//HeatingTempValue = Max6675_readTemperature(2);//加热区
 		if(reactionTempValue>=setingTempValue){
 			TIM_SetCompare3(TIM3,10000);//输出占空比0%
@@ -199,12 +201,7 @@ void ScanHeatingTemp(void)
 			}else{
 				//加热
 				TIM_SetCompare3(TIM3,5000);
-			}
-
-
-				
-			
-				
+			}	
 		}
 	
 }
@@ -456,7 +453,7 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 		}
 	}
 	//插卡处理,主动上报命令
-//	if(mymemcmp(keyString,CMS_TEST_INSERT_CARD,strlen(CMS_TEST_INSERT_CARD))==0){
+//	if(mymemcmp(keyString,CMD_TEST_INSERT_CARD,strlen(CMD_TEST_INSERT_CARD))==0){
 //		if(mymemcmp(valueString,"on",2)==0){
 //			
 //		}
@@ -684,8 +681,8 @@ void 	StartTestVacuole(uint32_t second){
 			uint32_t timeCnt;
 			
 			for(timeCnt=0;timeCnt<second;timeCnt++){
-				//sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);//注释以后调试
-					sampleCollectState=0;
+				sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);//注释以后调试
+					//sampleCollectState=0;
 					if(sampleCollectState!=0)
 					{
 						//数据检测错误,发送检测失败消息
@@ -713,8 +710,8 @@ void  StartSampleVacuole(uint32_t second)
 			uint32_t timeCnt;
 			
 			for(timeCnt=0;timeCnt<second;timeCnt++){
-				//sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);//注释以后调试
-					sampleCollectState=0;
+				sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);//注释以后调试
+					//sampleCollectState=0;
 					if(sampleCollectState!=0)
 					{
 						//数据检测错误,发送检测失败消息
@@ -767,6 +764,48 @@ void ResectAllDevice(void){
 	ResectHeatMoto();
 	ResectBreakMoto();
 }
+/*
+* @Description：发送样品检测开始和结束标志处理函数
+* @para ：uint8_t cmd,用于区分是液包(1)还是样品(0),uint8_t cmd_value(1)-start (0)-stop
+* @return void
+*/
+void SendSampleFlagData(uint8_t cmd,uint8_t cmd_value){
+	int len;
+	char *out;
+	//封装JSON数据
+	cJSON *cjson_message,*mes_data,*data_item;
+	cjson_message = cJSON_CreateObject();
+	cJSON_AddNumberToObject(cjson_message,CMD_CODE,ERR_NONE);
+	cJSON_AddStringToObject(cjson_message, CMD_MSG, "SampleCollect Start or Stop");
+	cJSON_AddStringToObject(cjson_message, CMD_TYPE, CMD_TYPE_DATA_REPORT);
+	cJSON_AddItemToObject(cjson_message, CMD_ON_OFF_TEST_VAL, mes_data = cJSON_CreateArray());
+	cJSON_AddItemToArray(mes_data, data_item=cJSON_CreateObject());
+	
+
+	if(cmd==TEST_VACUOLE_ID){
+		//检测液包
+		if(cmd_value==START_SAMPLE_TEST){
+		cJSON_AddStringToObject(data_item, CMD_ON_OFF_VACUOLE_TEST, "start");
+		}else{
+			cJSON_AddStringToObject(data_item, CMD_ON_OFF_VACUOLE_TEST, "stop");
+		}
+	}
+	if(cmd==TEST_SAMPLE_ID){
+		//检测样品
+		if(cmd_value==START_SAMPLE_TEST){
+			cJSON_AddStringToObject(data_item, CMD_ON_OFF_SAMPLE_TEST, "start");
+		}else{
+			cJSON_AddStringToObject(data_item, CMD_ON_OFF_SAMPLE_TEST, "stop");
+		}
+		
+	}
+	out = cJSON_PrintUnformatted(cjson_message);
+	len=strlen(out);
+	MyUartSend(UART1_PORT,out,len);
+	free(out);
+	cJSON_Delete(cjson_message);
+}
+
 
 /*
 * @Description：事件处理函数
@@ -784,22 +823,30 @@ void EventProcess(uint32_t NotifyValue){
 		case EVENT_BREAK_VACUOLE:
 			//刺破液包
 			BreakVacuole();
-		 
+#if DBUG_TEST	 
 		  printf("break vacuole\r\n");
+#endif
 			break;
 		case EVENT_PUSH_TEST_VACUOLE:
 			//继续推液包里面的检测体
 			PushVacuole();
+#if DBUG_TEST
 		  printf("continue push vacuole\r\n");
+#endif
 		  //开启阻抗检测功能
 			startCheckImpedance=0;
 		  startTestSampleFlag=1;
 			break;
 		case EVENT_TEST_VACUOLE_START:
 			//开始检测标液
+#if DBUG_TEST
 		  printf("start check vacuole\r\n");
+#endif
+		  SendSampleFlagData(TEST_VACUOLE_ID,START_SAMPLE_TEST);
 			StartTestVacuole(CHECK_VACUOLE_TIMER);
-			DetectBoardResetAll();	
+			SendSampleFlagData(TEST_VACUOLE_ID,STOP_SAMPLE_TEST);
+			DetectBoardResetAll();
+		
 			//停止电阻检测
 		  startCheckImpedance=1;
 		  //推样本检测液体
@@ -809,9 +856,15 @@ void EventProcess(uint32_t NotifyValue){
 			break;
 		case EVENT_TEST_SAMPLE_START:
 			//开始样本液的检测
+#if DBUG_TEST
 			printf("start check sample vacuole\r\n");
+#endif
+			SendSampleFlagData(TEST_SAMPLE_ID,START_SAMPLE_TEST);
 			StartSampleVacuole(CHECK_SAMPLE_TIMER);
+			SendSampleFlagData(TEST_SAMPLE_ID,STOP_SAMPLE_TEST);
+		  
 		  //停止电阻检测
+			DetectBoardResetAll();
 			startCheckImpedance=1; 
 			xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
 								(uint32_t)EVENT_SAMPLE_TEST_RESECT,

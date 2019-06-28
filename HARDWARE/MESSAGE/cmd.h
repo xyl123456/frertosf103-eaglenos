@@ -36,6 +36,7 @@ History:
 #define      CMD_VAL                            "value"                //命令参数
 #define      CMD_VACUOLE_VAL										"vacuole_value"				 //定标液参数
 #define      CMD_SAMPLE_VAL										  "sample_value"         //采样参数		
+#define      CMD_ON_OFF_TEST_VAL                "on_off_test_value"    //开关检测数据标志
 
 /*消息值*/
 #define      CMD_MSG_SUCCESS                    "success" 
@@ -57,7 +58,11 @@ History:
 /*Sample test 无参子命令*/
 #define      CMD_TEST_VAL_POWER                 "power"                  //开关机
 #define      CMD_TEST_VAL_SCAN                  "scan_id"                //扫描
-#define      CMS_TEST_INSERT_CARD               "card_insert"            //插卡
+#define      CMD_TEST_INSERT_CARD               "card_insert"            //插卡
+
+
+#define      CMD_ON_OFF_SAMPLE_TEST             "on_off_sample_test"      //样品检测通知开始与结束
+#define      CMD_ON_OFF_VACUOLE_TEST             "on_off_vacuole_test"    //液包检测通知开始与结束
 
 /*Sample test 有参子命令（测试预处理）*/
 #define		   CMD_TEST_VAL_PRE_TEST                "pre_test"               //包含加热、推标液，参数为温度

@@ -7,6 +7,8 @@
  extern "C" {
 #endif 
 
+#define DBUG_TEST     0   //关闭DBUG调试
+
 //#define HEATCONTROL    PBout(0)   //if use io control
 #define SCANCODEKEY    PBout(10)	// PB10
 
@@ -16,8 +18,8 @@
 #define SAMPLE_COLLECT_CARD_FOUR     4
 #define SAMPLE_COLLECT_CARD_FIVE     5
 
-#define CHECK_VACUOLE_TIMER          10//300					//s
-#define CHECK_SAMPLE_TIMER           10//180            //s
+#define CHECK_VACUOLE_TIMER          10					//s
+#define CHECK_SAMPLE_TIMER           10         //s
 
 //用于定义处理任务事件
 #define EVENT_PUSH_HEAT_CUT          1             //推加热片
@@ -27,10 +29,16 @@
 #define EVENT_TEST_SAMPLE_START      5             //开始检测样本液
 #define EVENT_SAMPLE_TEST_RESECT     6             //复位所有设备
 
+//标液检测标志停止与开始
+#define START_SAMPLE_TEST            1
+#define STOP_SAMPLE_TEST             0
+
+
 //定义是标液检测值
 #define TEST_VACUOLE_ID              0
 //定义样品检测值
 #define TEST_SAMPLE_ID              1
+
 void Uart1Process(char *uartMemary,int uartLen);
 void ProcessValueKeyDate(char *keyString,char *valueString);
 
@@ -67,6 +75,7 @@ void ResectAllDevice(void);//复位所有外设
 void ResectHeatMoto(void);//复位加热电机
 void ResectBreakMoto(void);//复位压液包的电机设备
 
+void SendSampleFlagData(uint8_t cmd,uint8_t cmd_value);
  
 extern void HalBoardInit(void);
 extern void MessageProcess(uint32_t NotifyValue);
