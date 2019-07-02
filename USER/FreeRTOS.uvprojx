@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\FreeRTOS\include;..\FreeRTOS\portable\RVDS\ARM_CM3;..\HARDWARE\EXTI;..\HARDWARE\KEY;..\HARDWARE\TIMER;..\MALLOC;..\HARDWARE\MESSAGE;..\CJSON;..\HARDWARE\MAX6675;..\HARDWARE\AD5676;..\HARDWARE\AD5933;..\HARDWARE\AD7124;..\HARDWARE\DetectBoard;..\HARDWARE\SPI;..\HARDWARE\SWITCH</IncludePath>
+              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\FreeRTOS\include;..\FreeRTOS\portable\RVDS\ARM_CM3;..\HARDWARE\EXTI;..\HARDWARE\KEY;..\HARDWARE\TIMER;..\MALLOC;..\HARDWARE\MESSAGE;..\CJSON;..\HARDWARE\MAX6675;..\HARDWARE\AD5676;..\HARDWARE\AD5933;..\HARDWARE\AD7124;..\HARDWARE\DetectBoard;..\HARDWARE\SPI;..\HARDWARE\SWITCH;..\HARDWARE\MOTOR</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -470,6 +470,11 @@
               <FileName>AnalogSwitch.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\SWITCH\AnalogSwitch.c</FilePath>
+            </File>
+            <File>
+              <FileName>SPI2.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\MOTOR\SPI2.c</FilePath>
             </File>
           </Files>
         </Group>

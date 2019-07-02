@@ -25,6 +25,7 @@ History:
 #include "error.h"
 #include "max6675.h"
 #include "DetectBoard.h"
+#include "SPI2.h"
 
 //任务优先级
 #define START_TASK_PRIO		1
@@ -111,7 +112,7 @@ void start_task(void *pvParameters)
                 (void*          )NULL,                  
                 (UBaseType_t    )TIMERCONTROL_TASK_PRIO,        
                 (TaskHandle_t*  )&TimerControlTask_Handler);    
-			*/								
+*/								
     //创建uart任务
     xTaskCreate((TaskFunction_t )uart_task,     	
                 (const char*    )"uart_task",   	
@@ -206,7 +207,6 @@ void uart_task(void *pvParameters)
 			vTaskDelay(10);	
     }
 }
-
 
 //错误处理任务函数
 void messageprocess_task(void *pvParameters)

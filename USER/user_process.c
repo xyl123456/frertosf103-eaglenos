@@ -18,8 +18,19 @@ History:
 #include "task.h"
 #include "max6675.h"
 #include "timer.h"
+#include "delay.h"
 
 #include "DetectBoard.h"
+
+#include "SPI2.h"
+
+/*
+//电机1------压破液包
+//电机2------推加热片
+*/
+
+
+
 
 /*标志位，用于标记对应事件发生*/
 uint8_t startScanFlag=0;										//用于扫描头启动事件标记
@@ -29,6 +40,7 @@ uint8_t startTestVacyoleFlag=0;							//检测标液体事件标志
 
 uint8_t startTestSampleFlag=0;              //检测样品液事件标志
 
+uint8_t scanCardKind=0;
 
 uint8_t startCheckImpedance=0;             //开启实时检测阻抗标志
 
@@ -161,8 +173,7 @@ void ScanImpedance(void)
 			xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
 						(uint32_t)EVENT_TEST_SAMPLE_START,
 						(eNotifyAction)eSetBits);	
-			}
-			
+			}	
 		}
 	}
 }
@@ -231,9 +242,27 @@ void HeatInit(void){
 }
 
 /*
+* @Description：电机初始化函数
+* @para ：void
+* @return void
+*/
+void MotorInit(void){
+	//有两个电机1,2
+	//电机1使用PB14---STEP,PB15---DIR
+	GPIO_InitTypeDef  GPIO_InitStructure;
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);	 //使能PB端口时钟
+	
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14|GPIO_Pin_15;				 //PB14|PB15 端口配置
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //推挽输出
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 //IO口速度为50MHz
+  GPIO_Init(GPIOB, &GPIO_InitStructure);					 //根据设定参数初始化GPIO_Pin_14|GPIO_Pin_15
+  GPIO_ResetBits(GPIOB,GPIO_Pin_14|GPIO_Pin_15);						 //GPIO_Pin_14|GPIO_Pin_15输出0
+}
+
+/*
 * @Description：插卡检测初始化函数
 * @para ：void
-* @return 无
+* @return void
 */
 void CardCheckInit(void)
 {
@@ -244,7 +273,6 @@ void CardCheckInit(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;  		 //上拉输入
   GPIO_Init(GPIOB, &GPIO_InitStructure);					 //根据设定参数初始化GPIOB.1
 }
-
 /*
 * @Description：所有外接设备初始化函数
 * @para ：void
@@ -258,6 +286,16 @@ void HalBoardInit(void)
 	CardCheckInit();
 	Max6675Init();	
 	HeatInit();
+	//MotorInit();//电机初始化xyl
+	SPI2_Init();
+	TMC5130_IO_Init();
+	//TMC5130_ENN1_LOW();
+	TMC5130_ENN2_LOW();
+	delay_us(10);
+	//TMC5130_Setup(1);
+	TMC5130_Setup(2);
+	
+	TMC5130_MoveForward(2,POSITION_P1*10);
 	DetectBoard_Initial();//采集板初始化
 	systemState=ScanCodeInit();
 	//systemState=ERR_INIT_SUCCESS;
@@ -290,14 +328,17 @@ uint32_t IntialProcess(void)
 */
 uint32_t SelfTestProcess(void)
 {
+	//return ERR_SELFTEST_SUCCESS;
 	int8_t selfTestState =DetectBoard_SelfCheck();
+	//int8_t selfTestState=0;
+	//delay_ms(1000);
 	if(selfTestState==0){
 		return ERR_SELFTEST_SUCCESS;
 	}else{
 		return ERR_SELFTEST_ERROR;
 	}
+	
 }
-
 
 /*extern 加热函数
 * @Description：加热反应区
@@ -322,8 +363,7 @@ void StartHeatBody(float tempValue)
 				//HEATCONTROL=0;
 			}
 		*/	
-		vTaskDelay(1000/portTICK_PERIOD_MS);	
-	
+		vTaskDelay(1000/portTICK_PERIOD_MS);
 }
 /*extern 停止加热函数
 * @Description：stop Heat
@@ -398,7 +438,8 @@ void SendSampleCollect(uint8_t sort,uint8_t vacuoleId)
 void BreakVacuole(void){
 	//标记刺破液包的标记为1
 	startBreakVacyoleFlag=1;
-	//
+	//电机行程3mm
+	TMC5130_MoveForward(1,POSITION_0*3);
 }
 
 /*继续推加热片函数(推样品检测函数)
@@ -407,6 +448,8 @@ void BreakVacuole(void){
 * @return uint8_t ,error---0  success---1
 */
 uint8_t PushVacuole(void){
+	//加热片型程10.4mm
+	TMC5130_MoveForward(2,POSITION_0*10);
 	return 1;
 }
 
@@ -416,7 +459,8 @@ uint8_t PushVacuole(void){
 * @return uint8_t ,error---0  success---1
 */
 uint8_t PushHeatCut(void){
-	
+	//加热片型程4mm
+	TMC5130_MoveForward(2,POSITION_0*4);
 	return 1;
 }
 
@@ -428,20 +472,27 @@ uint8_t PushHeatCut(void){
 uint32_t GetTestCardValue(char *keyString){
 	return 1;
 }
+
+/*SelectCardSort 函数
+* @Description：确认卡的类型
+* @para ：uint_t sort 卡的类型1---a,2---b,3---c,4---d 
+* @return void
+*/
+void SelectCardSort(uint8_t sort)
+{
+	scanCardKind=sort;
+}
+
 /*
 * @Description：处理样本检测的具体的value值的内容，主要依据的是键值对进行处理
 * @para ：void
 * @return 无
 */
-void ProcessValueKeyDate(char *keyString,char *valueString)
-{
+void ProcessValueKeyDate(char *keyString,char *valueString){
 	//开关机
 	if(mymemcmp(keyString,CMD_TEST_VAL_POWER,strlen(CMD_TEST_VAL_POWER))==0){
-		
 		if(mymemcmp(valueString,"on",2)==0){
-			
 		}else{
-			
 		}
 	}
 	//扫描功能
@@ -452,14 +503,14 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 			StopScanCode();
 		}
 	}
-	//插卡处理,主动上报命令
+//插卡处理,主动上报命令
 //	if(mymemcmp(keyString,CMD_TEST_INSERT_CARD,strlen(CMD_TEST_INSERT_CARD))==0){
 //		if(mymemcmp(valueString,"on",2)==0){
 //			
 //		}
 //		
 //	}
-	//样本检测前预处理命令功能，包含刺破液包，推加热片，加热，推动电机压气囊等
+//样本检测前预处理命令功能，包含刺破液包，推加热片，加热，推动电机压气囊等
 	if(mymemcmp(keyString,CMD_TEST_VAL_PRE_TEST,strlen(CMD_TEST_VAL_PRE_TEST))==0){
 		double tempValue;
 		uint8_t pushStatus;
@@ -473,18 +524,15 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 		//int8_t MotorStop(uint8_t class_value);
 		//开始加热
 		//StartHeatBody(float tempValue);
-		
 		//推加热片
 		pushStatus=PushHeatCut();
 		if(pushStatus==1){
 			StartHeatBody((float)tempValue);
 		}else{
 			//发送电机失败消息，加热电机复原
-		}
-		
+		}	
 	}
 		preTestFlag=1;//标记命令已经发送过，重复发送将不处理
-		
 	}
 	//加热控制命令
 		if(mymemcmp(keyString,CMD_TEST_VAL_ON_OFF_HEAT,strlen(CMD_TEST_VAL_ON_OFF_HEAT))==0){
@@ -503,28 +551,24 @@ void ProcessValueKeyDate(char *keyString,char *valueString)
 									(eNotifyAction)eSetBits);
 			}
 
-		}
+		}	
 	//样品采集命令
 	if(mymemcmp(keyString,CMD_TEST_VAL_COLLECT,strlen(CMD_TEST_VAL_COLLECT))==0){
+		
 		if(mymemcmp(valueString,CMD_TEST_CARD_A,strlen(CMD_TEST_CARD_A))==0){
-				StartTestVacuole(CHECK_VACUOLE_TIMER);//
+				//StartTestVacuole(CHECK_VACUOLE_TIMER);//
+				SelectCardSort(1);
 		}
 		if(mymemcmp(valueString,CMD_TEST_CARD_B,strlen(CMD_TEST_CARD_B))==0){
 			
-			DetectBoard_GetCartridgeBData(&testCardTwo);
+			//DetectBoard_GetCartridgeBData(&testCardTwo);
+				SelectCardSort(2);
 		}
 		if(mymemcmp(valueString,CMD_TEST_CARD_C,strlen(CMD_TEST_CARD_C))==0){
 			
-			DetectBoard_GetCartridgeCData(&testCardThree); 
-		}
-		/*
-		if(mymemcmp(valueString,CMD_TEST_CARD_A,strlen(CMD_TEST_CARD_A))==0){
-			
-		}
-		if(mymemcmp(valueString,CMD_TEST_CARD_A,strlen(CMD_TEST_CARD_A))==0){
-			
-		}
-		*/
+			//DetectBoard_GetCartridgeCData(&testCardThree);
+				SelectCardSort(3);			
+		}	
 	}
 	//打印命令
 	if(mymemcmp(keyString,CMD_TEST_VAL_PRINT,strlen(CMD_TEST_VAL_PRINT))==0){
@@ -582,36 +626,6 @@ void Uart1Process(char *uartMemary,int uartLen)
 				//SET设置
 			}
 		}
-		/*
-		if(parseValueDataLog==1){
-			char *typeSting = cJSON_GetObjectItem(root,"type")->valuestring;
-			//SendString(typeSting,strlen(typeSting));
-			//根据设备类型处理
-			if(memcmp(typeSting,"heart",5)==0){
-				//处理心跳数值
-				ResponHeart();
-			}
-			if(memcmp(typeSting,"sample_test",11)==0){
-				//获取命令值
-				cJSON *valueArry = cJSON_GetObjectItem(root,"value");//获取value数组
-				int arraySize = cJSON_GetArraySize(valueArry);//获取数组大小
-				
-				int i,j;
-				for(i=0;i<arraySize;i++){
-					cJSON *valueList = cJSON_GetArrayItem(valueArry,i);
-					for(j=0;j<cJSON_GetArraySize(valueList);j++){
-						char *keyString = cJSON_GetArrayItem(valueList,j)->string;
-						char *valueString = cJSON_GetArrayItem(valueList,j)->valuestring;
-						
-						ProcessAdc(keyString,valueString);//处理具体的命令
-						//SendString(keySting,strlen(keySting));
-						}
-						//char * keyString = cJSON_GetObjectItem(valueList,);	
-				}
-			}
-			cJSON_free((void *) typeSting);
-		}
-		*/
 		cJSON_Delete(root);
 	}else{
 	}
@@ -629,7 +643,7 @@ void Uart2Process(char *uartMemary,int uartLen)
 	//封装JSON数据
 	cJSON *cjson_message,*mes_data,*data_item;
 	cjson_message = cJSON_CreateObject();
-	cJSON_AddNumberToObject(cjson_message,CMD_CODE,ERR_NONE);
+	cJSON_AddNumberToObject(cjson_message,CMD_CODE,ERR_TEST_SCAN_SUCCESS);
 	cJSON_AddStringToObject(cjson_message, CMD_MSG, "Scan Success");
 	cJSON_AddStringToObject(cjson_message, CMD_TYPE, CMD_TYPE_DATA_REPORT);
 	cJSON_AddItemToObject(cjson_message, CMD_VAL, mes_data = cJSON_CreateArray());
@@ -668,6 +682,8 @@ void UartProcess(u8 uartPort,char *uartMemary,int uartLen)
 			break;
 		case UART4_PORT:
 			break;
+		default:
+			break;
 	}
 }
 
@@ -681,7 +697,10 @@ void 	StartTestVacuole(uint32_t second){
 			uint32_t timeCnt;
 			
 			for(timeCnt=0;timeCnt<second;timeCnt++){
+				if(scanCardKind==1){
 				sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);//注释以后调试
+				}
+				
 					//sampleCollectState=0;
 					if(sampleCollectState!=0)
 					{
@@ -692,13 +711,12 @@ void 	StartTestVacuole(uint32_t second){
 								break;
 					}else{
 					//发送数据
-					SendSampleCollect(SAMPLE_COLLECT_CARD_ONE,TEST_VACUOLE_ID);
+						if(scanCardKind==1){
+							SendSampleCollect(SAMPLE_COLLECT_CARD_ONE,TEST_VACUOLE_ID);
+						}
 					}
-				
 			}
-
 }
-
 /*
 * @Description：开始检测样品液的函数，通过不断发送检测数据
 * @para ：void
@@ -723,7 +741,6 @@ void  StartSampleVacuole(uint32_t second)
 					//发送数据
 					SendSampleCollect(SAMPLE_COLLECT_CARD_ONE,TEST_SAMPLE_ID);
 					}
-				
 			}
 }
 /*
@@ -732,7 +749,7 @@ void  StartSampleVacuole(uint32_t second)
 * @return void
 */
 void	ResectHeatMoto(void){
-	
+	TMC5130_MoveBackward(2,POSITION_0*14);
 }
 /*
 * @Description：复位压破液包电机外设
@@ -740,7 +757,7 @@ void	ResectHeatMoto(void){
 * @return void
 */
 void	ResectBreakMoto(void){
-	
+	TMC5130_MoveBackward(1,POSITION_0*3);
 }
 
 /*
@@ -842,11 +859,11 @@ void EventProcess(uint32_t NotifyValue){
 #if DBUG_TEST
 		  printf("start check vacuole\r\n");
 #endif
-		  SendSampleFlagData(TEST_VACUOLE_ID,START_SAMPLE_TEST);
-			StartTestVacuole(CHECK_VACUOLE_TIMER);
-			SendSampleFlagData(TEST_VACUOLE_ID,STOP_SAMPLE_TEST);
+		SendSampleFlagData(TEST_VACUOLE_ID,START_SAMPLE_TEST);
+		StartTestVacuole(CHECK_VACUOLE_TIMER);
+		delay_ms(400);
+		SendSampleFlagData(TEST_VACUOLE_ID,STOP_SAMPLE_TEST);
 			DetectBoardResetAll();
-		
 			//停止电阻检测
 		  startCheckImpedance=1;
 		  //推样本检测液体
@@ -861,6 +878,7 @@ void EventProcess(uint32_t NotifyValue){
 #endif
 			SendSampleFlagData(TEST_SAMPLE_ID,START_SAMPLE_TEST);
 			StartSampleVacuole(CHECK_SAMPLE_TIMER);
+		  delay_ms(400);
 			SendSampleFlagData(TEST_SAMPLE_ID,STOP_SAMPLE_TEST);
 		  
 		  //停止电阻检测
@@ -879,8 +897,6 @@ void EventProcess(uint32_t NotifyValue){
 		
 	}
 }
-
-
 
 /*
 * @Description：消息处理函数
@@ -930,7 +946,6 @@ void MessageProcess(uint32_t NotifyValue)
 		case ERR_TEST_BREAK_MOTOR:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Motor Error");
 			break;
-		
 		/*预加热处理任务成功*/
 		case ERR_TEST_PREPARE_SUCCESS:
 			cJSON_AddStringToObject(cjson_message, CMD_MSG,"Pre test Success");

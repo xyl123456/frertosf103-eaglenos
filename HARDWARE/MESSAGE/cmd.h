@@ -65,7 +65,7 @@ History:
 #define      CMD_ON_OFF_VACUOLE_TEST             "on_off_vacuole_test"    //液包检测通知开始与结束
 
 /*Sample test 有参子命令（测试预处理）*/
-#define		   CMD_TEST_VAL_PRE_TEST                "pre_test"               //包含加热、推标液，参数为温度
+#define		   CMD_TEST_VAL_PRE_TEST              "pre_test"               //包含加热、推标液，参数为温度
 #define      CMD_TEST_VAL_COLLECT               "sample_collect"         //样品采集，参数为卡类型
 #define      CMD_TEST_VAL_PRINT                 "print"                  //打印命令，参数待定
 #define      CMD_TEST_VAL_ON_OFF_HEAT           "on_off_heat"            //开关加热命令

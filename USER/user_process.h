@@ -7,7 +7,7 @@
  extern "C" {
 #endif 
 
-#define DBUG_TEST     0   //关闭DBUG调试
+#define DBUG_TEST     0 //关闭DBUG调试
 
 //#define HEATCONTROL    PBout(0)   //if use io control
 #define SCANCODEKEY    PBout(10)	// PB10
@@ -49,6 +49,9 @@ void StopScanCode(void);
 void CardCheckInit(void);
 void HeatInit(void);
 void StopHeatBody(void);
+
+
+void SelectCardSort(uint8_t sort);
 
 void EventProcess(uint32_t NotifyValue);
 void ScanSensorTime(void);
