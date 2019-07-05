@@ -32,12 +32,12 @@ int8_t DetectBoard_Initial(void)
 	
 	/*ad5676初始化*/
 	AD5676_Init();
-	AD5676_WriteToInputRegDAC(DAC_0,DAC_0_value );   
-	AD5676_WriteToInputRegDAC(DAC_1,DAC_1_value );
-	AD5676_WriteToInputRegDAC(DAC_2,DAC_2_value );
-	AD5676_WriteToInputRegDAC(DAC_3,DAC_3_value );
-	AD5676_WriteToInputRegDAC(DAC_4,DAC_4_value );   
-	AD5676_WriteToInputRegDAC(DAC_5,DAC_5_value);   
+	AD5676_WriteToInputRegDAC(DAC_0,DAC_0_VALUE );   
+	AD5676_WriteToInputRegDAC(DAC_1,DAC_1_VALUE );
+	AD5676_WriteToInputRegDAC(DAC_2,DAC_2_VALUE );
+	AD5676_WriteToInputRegDAC(DAC_3,DAC_3_VALUE );
+	AD5676_WriteToInputRegDAC(DAC_4,DAC_4_VALUE );   
+	AD5676_WriteToInputRegDAC(DAC_5,DAC_5_VALUE );   
 	//AD5676_PowerDown_ALL(); 
 	
 	/*ad5933初始化*/
@@ -53,17 +53,6 @@ int8_t DetectBoard_Initial(void)
 	return ret;
 }
 
-
-
-/***********************************************************************************
-** @Description:信号板复位函数
-** @para :       void
-** @return       void  
-***********************************************************************************/
-void DetectBoardResetAll(void)
-{
-	SW_TEST_config(SW_SC);
-}
 /***********************************************************************************
 ** @Description:信号板自检函数
 ** @para :       void
@@ -74,7 +63,6 @@ int8_t DetectBoard_SelfCheck(void)
 	int8_t ret = 0;
 	uint32_t t=0;
 	uint32_t SC[13];
-	uint8_t i,j;
 	
 	/*自检配置*/
 	//AD5676_PowerUp_ALL();
@@ -83,31 +71,29 @@ int8_t DetectBoard_SelfCheck(void)
 	delay_ms(10);
 	
 	/*获取各个通道的自检值*/
-	for(i=0;i<13;i++){
+	for(u8 i=0;i<13;i++){
 		t=AD7124_ReadRawData(&ad7124Dev);
 		if(i==(t&0xf))
 			SC[i]=t>>8;
-		//else
-			//i--;
-		//delay_ms(10);	
+		delay_ms(10);	
 		//printf("AD7124 : %d\r\n",SC[i]);
 		//printf("CH : %d\r\n",i);
 	}
 	
   /*自检结果比较*/
-	for(j=0;j<8;j++){
-		if(SC[j]<9000000||SC[j]>9400000)
+	for(u8 i=0;i<8;i++){
+		if(SC[i]<9000000||SC[i]>9200000)
 			ret=1;
 	}
-	if(SC[8]<8900000||SC[8]>9100000)
+	if(SC[8]<8900000||SC[8]>9000000)
 		ret=1;
-	if(SC[9]<9200000||SC[9]>9700000)
+	if(SC[9]<9200000||SC[9]>9400000)
 		ret=1;
-	if(SC[10]<9700000||SC[10]>10500000)
+	if(SC[10]<9700000||SC[10]>9900000)
 		ret=1;
 	if(SC[11]<9900000||SC[11]>11000000)
 		ret=1;
-	if(SC[12]<9900000||SC[12]>12000000)
+	if(SC[12]<9900000||SC[12]>11000000)
 		ret=1;
 	
 	return ret;
@@ -161,68 +147,64 @@ int8_t DetectBoard_GetCartridgeAData(TestCard_One * CartridgeA)
 	int8_t count[5] = {0,0,0,0,0};
 	uint32_t t=0;
 	
-	uint8_t i,j,n;
 	/*卡A测试配置*/
 	AD7124_SetChannles(&ad7124Dev,AD7124_CartridgeA_Channel);
 	SW_TEST_config(SW_P1);
 	delay_ms(10);
 	
 	/*测试*/
-	for(i=0;i<Apoints;i++){
-		for(j=0;j<6;j++){
+	for(u8 i=0;i<A_POINTS;i++){
+		for(u8 j=0;j<6;j++){
 			t=AD7124_ReadRawData(&ad7124Dev);
 			if(j<=(t&0xf)){
-				j=(t&0xf);
+				j=t&0xf;
 				switch (j){
 					case 0:
 						CartridgeA->TestCardOne.iMg[i] =0x00ffffff&(t>>8);
-					 //printf("CH:%d\r\n",j);
-					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.iMg[i]);
+					  //printf("CH:%d\r\n",j);
+					  //printf("Value:%d\r\n",CartridgeA->TestCardOne.iMg[i]);
 					  count[0]++;
 					  break;
 					case 1:
 						CartridgeA->TestCardOne.iCa[i] = 0x00ffffff&(t>>8);
-					 // printf("CH:%d\r\n",j);
-					// printf("Value:%d\r\n",CartridgeA->TestCardOne.iCa[i]);
+					  //printf("CH:%d\r\n",j);
+					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.iCa[i]);
 					  count[1]++;
 					  break;
 					case 2:
 						CartridgeA->TestCardOne.K[i] = 0x00ffffff&(t>>8);
-					//  printf("CH:%d\r\n",j);
+					  //printf("CH:%d\r\n",j);
 					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.K[i]);
 					  count[2]++;
 					  break;
 					case 3:
 						CartridgeA->TestCardOne.Na[i] = 0x00ffffff&(t>>8);
-					//  printf("CH:%d\r\n",j);
-					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.Na[i]);
+					  //printf("CH:%d\r\n",j);
+					  //printf("Value:%d\r\n",CartridgeA->TestCardOne.Na[i]);
 					  count[3]++;
 					  break;
 					case 5:
 						CartridgeA->TestCardOne.Cl[i] = 0x00ffffff&(t>>8);
-					//  printf("CH:%d\r\n",j);
+					 // printf("CH:%d\r\n",j);
 					 // printf("Value:%d\r\n",CartridgeA->TestCardOne.Cl[i]);
 					  count[4]++;
 					  break;
 					default:
 						break;
 				}	
-			}else	
-			{
-			 // j--;	
 			}
+			//else	
+			  //j--;	
 		  //delay_ms(10);	
 		}
 	  //delay_ms(10);	
 	}
 	
 	/*error check*/
-	for(n=0;n<5;n++){
+	for(int8_t n=0;n<5;n++){
 		//printf("%d\r\n",count[n]);
-		if (count[n]!=Apoints)
-		{
-			ret = 1;
-		}
+		if (count[n]!=A_POINTS)
+		ret = 1;
 	}
 	return ret;
 }
@@ -237,15 +219,15 @@ int8_t DetectBoard_GetCartridgeBData(TestCard_Two * CartridgeB)
 	int8_t ret = 0;
 	int8_t count[6]= {0,0,0,0,0,0};
 	uint32_t t=0;
-	uint8_t i,j,n;
+	
 	/*卡A测试配置*/
 	AD7124_SetChannles(&ad7124Dev,AD7124_CartridgeB_Channel);//设置通道后启动转换
 	SW_TEST_config(SW_P1);
 	delay_ms(10);
 	
 	/*测试*/
-	for(i=0;i<Apoints;i++){
-		for(j=0;j<13;j++){
+	for(u8 i=0;i<B_POINTS;i++){
+		for(u8 j=0;j<13;j++){
 			
 			t=AD7124_ReadRawData(&ad7124Dev);
 			if(j<=(t&0xf)){
@@ -283,17 +265,17 @@ int8_t DetectBoard_GetCartridgeBData(TestCard_Two * CartridgeB)
 						break;
 				}	
 			}
-			//else	
-			  //j--;	
+			else	
+			  j--;	
 		  //delay_ms(10);	
 		}
 	  //delay_ms(10);	
 	}
 	
 	/*error check*/
-	for(n=0;n<6;n++){
+	for(int8_t n=0;n<6;n++){
 		printf("%d\r\n",count[n]);
-		if (count[n]!=Bpoints)
+		if (count[n]!=B_POINTS)
 		ret = 1;
 	}
 	return ret;
@@ -309,15 +291,15 @@ int8_t DetectBoard_GetCartridgeCData(TestCard_Three * CartridgeC)
 	int8_t ret = 0;
 	int8_t count[11]= {0,0,0,0,0,0,0,0,0,0,0};
 	uint32_t t=0;
-	uint8_t i,j,n;
+	
 	/*卡A测试配置*/
 	AD7124_SetChannles(&ad7124Dev,AD7124_CartridgeC_Channel);//设置通道后启动转换
 	SW_TEST_config(SW_P1);
 	delay_ms(10);
 	
 	/*测试*/
-	for(i=0;i<Apoints;i++){
-		for(j=0;j<13;j++){
+	for(u8 i=0;i<C_POINTS;i++){
+		for(u8 j=0;j<13;j++){
 			
 			t=AD7124_ReadRawData(&ad7124Dev);
 			if(j<=(t&0xf)){
@@ -376,17 +358,17 @@ int8_t DetectBoard_GetCartridgeCData(TestCard_Three * CartridgeC)
 						break;
 				}	
 			}
-			//else	
-			 // j--;	
+			else	
+			  j--;	
 		  //delay_ms(10);	
 		}
 	  //delay_ms(10);	
 	}
 	
 	/*error check*/
-	for(n=0;n<11;n++){
+	for(int8_t n=0;n<11;n++){
 		//printf("%d\r\n",count[n]);
-		if (count[n]!=Cpoints)
+		if (count[n]!=C_POINTS)
 		ret = 1;
 	}
 	return ret;

@@ -7,8 +7,16 @@
  extern "C" {
 #endif 
 
-#define DBUG_TEST     0 //关闭DBUG调试
+#define DBUG_TEST     1 //关闭DBUG调试
 
+
+#define STEP_MOTO1   PGout(11)
+#define DIR_MOTO1    PGout(13)
+#define MOTOR1_EN    PGout(9)
+
+#define STEP_MOTO2   PAout(11)
+#define DIR_MOTO2    PAout(12)
+#define MOTOR2_EN    PDout(3)
 //#define HEATCONTROL    PBout(0)   //if use io control
 #define SCANCODEKEY    PBout(10)	// PB10
 
@@ -72,6 +80,11 @@ uint32_t PreTestProcess(void);
 void StartHeatBody(float tempValue);
  
 void SendSampleCollect(uint8_t sort,uint8_t vacuoleId);
+
+
+void MotorInit(void);//电机初始化
+void StopMoto(void);//停止电机
+void StepDir(uint8_t sort,uint8_t dir,uint32_t period,uint32_t steps);//设置电机函数
 
 
 void ResectAllDevice(void);//复位所有外设

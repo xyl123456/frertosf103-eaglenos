@@ -25,7 +25,7 @@ void AD5933_Init(void)
 	AD5933_ConfigSweep(AD5933_STAR_FREQ, AD5933_INC_FREQ, 10);  // 30k起始，1k步长，10个点
 	AD5933_ConfigSettlingCycl(AD5933_SETTLE_CYCL);
 	AD5933_Standby();
-	AD5933_SetSystemClk(AD5933_CONTROL_EXT_SYSCLK);
+	AD5933_SetSystemClk(AD5933_CONTROL_INT_SYSCLK);
 	AD5933_SetRangeAndGain(AD5933_RANGE_200mVpp, AD5933_GAIN_X5);
 	AD5933_InitStartFreq();
 	AD5933_StartFreqSweep();

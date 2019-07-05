@@ -55,4 +55,3 @@
 ..\obj\user_process.o: ..\HARDWARE\AD7124\AD7124.h
 ..\obj\user_process.o: ..\HARDWARE\AD7124\AD7124_regs.h
 ..\obj\user_process.o: ..\HARDWARE\AD7124\platform_drivers.h
-..\obj\user_process.o: ..\HARDWARE\MOTOR\SPI2.h

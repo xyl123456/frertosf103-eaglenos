@@ -22,15 +22,12 @@ History:
 
 #include "DetectBoard.h"
 
-#include "SPI2.h"
+//#include "SPI2.h"
 
 /*
 //电机1------压破液包
 //电机2------推加热片
 */
-
-
-
 
 /*标志位，用于标记对应事件发生*/
 uint8_t startScanFlag=0;										//用于扫描头启动事件标记
@@ -53,7 +50,6 @@ float setingTempValue=0;
 TestCard_One 			testCardOne;
 TestCard_Two 			testCardTwo;
 TestCard_Three 		testCardThree;
-
 
 extern TaskHandle_t MessageProcessTask_Handler;	//通知处理句柄
 uint32_t systemState;//系统状态检测变量
@@ -140,7 +136,6 @@ uint8_t TestImpedanceIsOk(void){
 		}
 	
 }
-
 
 /*
 * @Description：实时检测阻抗函数
@@ -241,6 +236,59 @@ void HeatInit(void){
 	TIM_SetCompare3(TIM3,10000);
 }
 
+
+
+/*
+* @Description：电机设置函数
+* @para ：uint8_t sort,uint8_t dir,uint32_t period,uint32_t steps,
+  sort ---1表示1号电机，2表示2号电机
+  dir --- 0表示正转，1表示反转
+  period---配置周期数
+  step---转动步数，1.8°---200步
+* @return void
+*/
+void StepDir(uint8_t sort,uint8_t dir,uint32_t period,uint32_t steps)
+{
+	if(sort==1){
+	MOTOR1_EN=0;
+	}else if(sort==2){
+		MOTOR2_EN=0;
+	}
+	uint32_t i;
+	for(i=0;i<=steps;i++)
+	{
+		if(sort==1){
+			DIR_MOTO1=dir;
+			STEP_MOTO1=1;
+			delay_us(1);
+			STEP_MOTO1=0;
+		}else if(sort==2){
+			DIR_MOTO2=dir;
+			STEP_MOTO2=1;
+			delay_us(1);
+			STEP_MOTO2=0;
+		}
+		delay_us(period);
+	}
+	if(sort==1){
+	MOTOR1_EN=1;
+	}else if(sort==2){
+		MOTOR2_EN=1;
+	}
+}
+/*
+* @Description：复位电机函数
+* @para ：void
+* @return void
+*/
+void StopMoto(void)
+{
+		DIR_MOTO1=1;
+		STEP_MOTO1=1;
+		DIR_MOTO2=1;
+		STEP_MOTO2=1;
+}
+
 /*
 * @Description：电机初始化函数
 * @para ：void
@@ -248,15 +296,37 @@ void HeatInit(void){
 */
 void MotorInit(void){
 	//有两个电机1,2
-	//电机1使用PB14---STEP,PB15---DIR
+	//电机1使用PG11---STEP,PG13---DIR
+	//电机1刺破液包
 	GPIO_InitTypeDef  GPIO_InitStructure;
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);	 //使能PB端口时钟
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOG, ENABLE);	 //使能PG端口时钟
 	
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14|GPIO_Pin_15;				 //PB14|PB15 端口配置
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9|GPIO_Pin_11|GPIO_Pin_13;				 //PG11|PG13端口配置
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //推挽输出
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 //IO口速度为50MHz
-  GPIO_Init(GPIOB, &GPIO_InitStructure);					 //根据设定参数初始化GPIO_Pin_14|GPIO_Pin_15
-  GPIO_ResetBits(GPIOB,GPIO_Pin_14|GPIO_Pin_15);						 //GPIO_Pin_14|GPIO_Pin_15输出0
+  GPIO_Init(GPIOG, &GPIO_InitStructure);					 //根据设定参数初始化GPIO_Pin_11|GPIO_Pin_13
+  GPIO_ResetBits(GPIOG,GPIO_Pin_11|GPIO_Pin_13);						 //GPIO_Pin_11|GPIO_Pin_13
+	//电机使能端PG9
+	GPIO_SetBits(GPIOG,GPIO_Pin_9);
+	
+	//电机2使用PA11---STEP,PA12---DIR
+	//电机2推加热片
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);	 //使能PA端口时钟
+	
+	
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11|GPIO_Pin_12;				 //PG11|PG12端口配置
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //推挽输出
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 //IO口速度为50MHz
+  GPIO_Init(GPIOA, &GPIO_InitStructure);					 //根据设定参数初始化GPIO_Pin_11|GPIO_Pin_12
+  GPIO_ResetBits(GPIOA,GPIO_Pin_11|GPIO_Pin_12);					 //GPIO_Pin_11|GPIO_Pin_12输出0
+	
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);	 //使能PD端口时钟
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;				 //PD3端口配置
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //推挽输出
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 //IO口速度为50MHz
+  GPIO_Init(GPIOD, &GPIO_InitStructure);					 //根据设定参数初始化GPIO_Pin_11|GPIO_Pin_12
+  GPIO_SetBits(GPIOD,GPIO_Pin_3);					 //GPIO_Pin_3输出1
+	
 }
 
 /*
@@ -286,19 +356,21 @@ void HalBoardInit(void)
 	CardCheckInit();
 	Max6675Init();	
 	HeatInit();
-	//MotorInit();//电机初始化xyl
-	SPI2_Init();
-	TMC5130_IO_Init();
-	//TMC5130_ENN1_LOW();
-	TMC5130_ENN2_LOW();
-	delay_us(10);
-	//TMC5130_Setup(1);
-	TMC5130_Setup(2);
-	
-	TMC5130_MoveForward(2,POSITION_P1*10);
+	MotorInit();//电机初始化
 	DetectBoard_Initial();//采集板初始化
 	systemState=ScanCodeInit();
+	#if DBUG_TEST
+	printf("continue push vacuole\r\n");
+	#endif
+
+	//ResectAllDevice();
 	//systemState=ERR_INIT_SUCCESS;
+	
+	//test
+	//StartScanCode();
+//	delay_ms(5000);
+	//StartHeatBody(30);
+	//StopScanCode();
 }
 
 
@@ -373,7 +445,7 @@ void StartHeatBody(float tempValue)
 void StopHeatBody(void)
 {
 	heatBodyFlag=0;
-	TIM_SetCompare3(TIM3,10000);//
+	TIM_SetCompare3(TIM3,10000);//  
 }
 
 /*extern 函数
@@ -401,11 +473,11 @@ void SendSampleCollect(uint8_t sort,uint8_t vacuoleId)
 			cJSON_AddItemToObject(cjson_message, CMD_SAMPLE_VAL, mes_data = cJSON_CreateArray());
 			}
 			cJSON_AddItemToArray(mes_data, data_item=cJSON_CreateObject());
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_IMG, cJSON_CreateIntArray(testCardOne.TestCardOne.iMg,Apoints));
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CA, cJSON_CreateIntArray(testCardOne.TestCardOne.iCa,Apoints));
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_K, cJSON_CreateIntArray(testCardOne.TestCardOne.K,Apoints));
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_NA, cJSON_CreateIntArray(testCardOne.TestCardOne.Na,Apoints));
-			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CL, cJSON_CreateIntArray(testCardOne.TestCardOne.Cl,Apoints));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_IMG, cJSON_CreateIntArray(testCardOne.TestCardOne.iMg,A_POINTS));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CA, cJSON_CreateIntArray(testCardOne.TestCardOne.iCa,A_POINTS));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_K, cJSON_CreateIntArray(testCardOne.TestCardOne.K,A_POINTS));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_NA, cJSON_CreateIntArray(testCardOne.TestCardOne.Na,A_POINTS));
+			cJSON_AddItemToObject(data_item, CMD_REPORT_VAL_CL, cJSON_CreateIntArray(testCardOne.TestCardOne.Cl,A_POINTS));
 			break;
 		case 2:
 			//mymemcpy(testCardTwo.buffer,buf,sizeof(buf));
@@ -439,7 +511,7 @@ void BreakVacuole(void){
 	//标记刺破液包的标记为1
 	startBreakVacyoleFlag=1;
 	//电机行程3mm
-	TMC5130_MoveForward(1,POSITION_0*3);
+	StepDir(1,0,6400,300);
 }
 
 /*继续推加热片函数(推样品检测函数)
@@ -448,8 +520,8 @@ void BreakVacuole(void){
 * @return uint8_t ,error---0  success---1
 */
 uint8_t PushVacuole(void){
-	//加热片型程10.4mm
-	TMC5130_MoveForward(2,POSITION_0*10);
+	//加热片型程4mm
+	StepDir(2,0,6400,400);
 	return 1;
 }
 
@@ -459,8 +531,8 @@ uint8_t PushVacuole(void){
 * @return uint8_t ,error---0  success---1
 */
 uint8_t PushHeatCut(void){
-	//加热片型程4mm
-	TMC5130_MoveForward(2,POSITION_0*4);
+	//加热片型程10mm
+	StepDir(2,0,6400,1000);
 	return 1;
 }
 
@@ -697,9 +769,9 @@ void 	StartTestVacuole(uint32_t second){
 			uint32_t timeCnt;
 			
 			for(timeCnt=0;timeCnt<second;timeCnt++){
-				if(scanCardKind==1){
+			//	if(scanCardKind==1){
 				sampleCollectState=DetectBoard_GetCartridgeAData(&testCardOne);//注释以后调试
-				}
+				//}
 				
 					//sampleCollectState=0;
 					if(sampleCollectState!=0)
@@ -711,9 +783,10 @@ void 	StartTestVacuole(uint32_t second){
 								break;
 					}else{
 					//发送数据
-						if(scanCardKind==1){
+						//if(scanCardKind==1){
 							SendSampleCollect(SAMPLE_COLLECT_CARD_ONE,TEST_VACUOLE_ID);
-						}
+						//}
+						
 					}
 			}
 }
@@ -749,7 +822,8 @@ void  StartSampleVacuole(uint32_t second)
 * @return void
 */
 void	ResectHeatMoto(void){
-	TMC5130_MoveBackward(2,POSITION_0*14);
+	StepDir(2,1,3200,1400);
+
 }
 /*
 * @Description：复位压破液包电机外设
@@ -757,7 +831,7 @@ void	ResectHeatMoto(void){
 * @return void
 */
 void	ResectBreakMoto(void){
-	TMC5130_MoveBackward(1,POSITION_0*3);
+	StepDir(1,1,3200,400);
 }
 
 /*
@@ -776,10 +850,9 @@ void ResectAllDevice(void){
 	startTestSampleFlag=0;              //检测样品液事件标志
 	startCheckImpedance=0;             //开启实时检测阻抗标志
 	preTestFlag=0;
-
 	
-	ResectHeatMoto();
 	ResectBreakMoto();
+	ResectHeatMoto();
 }
 /*
 * @Description：发送样品检测开始和结束标志处理函数
@@ -823,7 +896,6 @@ void SendSampleFlagData(uint8_t cmd,uint8_t cmd_value){
 	cJSON_Delete(cjson_message);
 }
 
-
 /*
 * @Description：事件处理函数
 * @para ：void
@@ -860,10 +932,12 @@ void EventProcess(uint32_t NotifyValue){
 		  printf("start check vacuole\r\n");
 #endif
 		SendSampleFlagData(TEST_VACUOLE_ID,START_SAMPLE_TEST);
+		taskENTER_CRITICAL();           //进入临界区
 		StartTestVacuole(CHECK_VACUOLE_TIMER);
+		taskEXIT_CRITICAL();            //退出临界区
 		delay_ms(400);
 		SendSampleFlagData(TEST_VACUOLE_ID,STOP_SAMPLE_TEST);
-			DetectBoardResetAll();
+			//DetectBoardResetAll();
 			//停止电阻检测
 		  startCheckImpedance=1;
 		  //推样本检测液体
@@ -877,12 +951,14 @@ void EventProcess(uint32_t NotifyValue){
 			printf("start check sample vacuole\r\n");
 #endif
 			SendSampleFlagData(TEST_SAMPLE_ID,START_SAMPLE_TEST);
+		taskENTER_CRITICAL();           //进入临界区
 			StartSampleVacuole(CHECK_SAMPLE_TIMER);
+		taskEXIT_CRITICAL();            //退出临界区
 		  delay_ms(400);
 			SendSampleFlagData(TEST_SAMPLE_ID,STOP_SAMPLE_TEST);
 		  
 		  //停止电阻检测
-			DetectBoardResetAll();
+			//DetectBoardResetAll();
 			startCheckImpedance=1; 
 			xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
 								(uint32_t)EVENT_SAMPLE_TEST_RESECT,

@@ -25,7 +25,7 @@ History:
 #include "error.h"
 #include "max6675.h"
 #include "DetectBoard.h"
-#include "SPI2.h"
+
 
 //任务优先级
 #define START_TASK_PRIO		1
@@ -94,7 +94,7 @@ void start_task(void *pvParameters)
 	EXTIX_Init();				//外部中断
 	my_mem_init(SRAMIN);            	//初始化内部内存池
 	
-	HalBoardInit();//外围接口初始化
+	//HalBoardInit();//外围接口初始化
   taskENTER_CRITICAL();           //进入临界区
 		//创建周期性定时器
 		AutoReloadTimer_Handle = xTimerCreate(
@@ -138,7 +138,6 @@ void start_task(void *pvParameters)
 								
     vTaskDelete(StartTask_Handler); //删除开始任务
     taskEXIT_CRITICAL();            //退出临界区
-		
 }
 
 void timercontrol_task(void *pvParameters)

@@ -323,7 +323,7 @@
             <wLevel>0</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
@@ -470,11 +470,6 @@
               <FileName>AnalogSwitch.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\SWITCH\AnalogSwitch.c</FilePath>
-            </File>
-            <File>
-              <FileName>SPI2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\MOTOR\SPI2.c</FilePath>
             </File>
           </Files>
         </Group>
