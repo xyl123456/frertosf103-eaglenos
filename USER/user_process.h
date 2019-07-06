@@ -7,7 +7,7 @@
  extern "C" {
 #endif 
 
-#define DBUG_TEST     1 //关闭DBUG调试
+#define DBUG_TEST     0 //关闭DBUG调试
 
 
 #define STEP_MOTO1   PGout(11)
@@ -17,6 +17,7 @@
 #define STEP_MOTO2   PAout(11)
 #define DIR_MOTO2    PAout(12)
 #define MOTOR2_EN    PDout(3)
+
 //#define HEATCONTROL    PBout(0)   //if use io control
 #define SCANCODEKEY    PBout(10)	// PB10
 

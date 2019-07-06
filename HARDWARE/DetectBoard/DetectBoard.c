@@ -63,7 +63,7 @@ int8_t DetectBoard_SelfCheck(void)
 	int8_t ret = 0;
 	uint32_t t=0;
 	uint32_t SC[13];
-	
+	u8 i,j;
 	/*自检配置*/
 	//AD5676_PowerUp_ALL();
 	AD7124_SetChannles(&ad7124Dev,AD7124_All_Channel);
@@ -71,7 +71,7 @@ int8_t DetectBoard_SelfCheck(void)
 	delay_ms(10);
 	
 	/*获取各个通道的自检值*/
-	for(u8 i=0;i<13;i++){
+	for(i=0;i<13;i++){
 		t=AD7124_ReadRawData(&ad7124Dev);
 		if(i==(t&0xf))
 			SC[i]=t>>8;
@@ -81,8 +81,8 @@ int8_t DetectBoard_SelfCheck(void)
 	}
 	
   /*自检结果比较*/
-	for(u8 i=0;i<8;i++){
-		if(SC[i]<9000000||SC[i]>9200000)
+	for(j=0;j<8;j++){
+		if(SC[j]<9000000||SC[j]>9200000)
 			ret=1;
 	}
 	if(SC[8]<8900000||SC[8]>9000000)
@@ -146,15 +146,15 @@ int8_t DetectBoard_GetCartridgeAData(TestCard_One * CartridgeA)
 	int8_t ret = 0;
 	int8_t count[5] = {0,0,0,0,0};
 	uint32_t t=0;
-	
+	u8 i,j,n;
 	/*卡A测试配置*/
 	AD7124_SetChannles(&ad7124Dev,AD7124_CartridgeA_Channel);
 	SW_TEST_config(SW_P1);
 	delay_ms(10);
 	
 	/*测试*/
-	for(u8 i=0;i<A_POINTS;i++){
-		for(u8 j=0;j<6;j++){
+	for(i=0;i<A_POINTS;i++){
+		for(j=0;j<6;j++){
 			t=AD7124_ReadRawData(&ad7124Dev);
 			if(j<=(t&0xf)){
 				j=t&0xf;
@@ -201,7 +201,7 @@ int8_t DetectBoard_GetCartridgeAData(TestCard_One * CartridgeA)
 	}
 	
 	/*error check*/
-	for(int8_t n=0;n<5;n++){
+	for(n=0;n<5;n++){
 		//printf("%d\r\n",count[n]);
 		if (count[n]!=A_POINTS)
 		ret = 1;
@@ -219,15 +219,15 @@ int8_t DetectBoard_GetCartridgeBData(TestCard_Two * CartridgeB)
 	int8_t ret = 0;
 	int8_t count[6]= {0,0,0,0,0,0};
 	uint32_t t=0;
-	
+	u8 i,j ,n;
 	/*卡A测试配置*/
 	AD7124_SetChannles(&ad7124Dev,AD7124_CartridgeB_Channel);//设置通道后启动转换
 	SW_TEST_config(SW_P1);
 	delay_ms(10);
 	
 	/*测试*/
-	for(u8 i=0;i<B_POINTS;i++){
-		for(u8 j=0;j<13;j++){
+	for(i=0;i<B_POINTS;i++){
+		for(j=0;j<13;j++){
 			
 			t=AD7124_ReadRawData(&ad7124Dev);
 			if(j<=(t&0xf)){
@@ -273,8 +273,8 @@ int8_t DetectBoard_GetCartridgeBData(TestCard_Two * CartridgeB)
 	}
 	
 	/*error check*/
-	for(int8_t n=0;n<6;n++){
-		printf("%d\r\n",count[n]);
+	for(n=0;n<6;n++){
+		//printf("%d\r\n",count[n]);
 		if (count[n]!=B_POINTS)
 		ret = 1;
 	}
@@ -291,15 +291,15 @@ int8_t DetectBoard_GetCartridgeCData(TestCard_Three * CartridgeC)
 	int8_t ret = 0;
 	int8_t count[11]= {0,0,0,0,0,0,0,0,0,0,0};
 	uint32_t t=0;
-	
+	u8 i,j,n;
 	/*卡A测试配置*/
 	AD7124_SetChannles(&ad7124Dev,AD7124_CartridgeC_Channel);//设置通道后启动转换
 	SW_TEST_config(SW_P1);
 	delay_ms(10);
 	
 	/*测试*/
-	for(u8 i=0;i<C_POINTS;i++){
-		for(u8 j=0;j<13;j++){
+	for(i=0;i<C_POINTS;i++){
+		for(j=0;j<13;j++){
 			
 			t=AD7124_ReadRawData(&ad7124Dev);
 			if(j<=(t&0xf)){
@@ -366,7 +366,7 @@ int8_t DetectBoard_GetCartridgeCData(TestCard_Three * CartridgeC)
 	}
 	
 	/*error check*/
-	for(int8_t n=0;n<11;n++){
+	for(n=0;n<11;n++){
 		//printf("%d\r\n",count[n]);
 		if (count[n]!=C_POINTS)
 		ret = 1;

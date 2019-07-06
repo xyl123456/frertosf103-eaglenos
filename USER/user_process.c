@@ -156,6 +156,9 @@ void ScanImpedance(void)
 			if(startTestVacyoleFlag==0){
 				startTestVacyoleFlag=1;
 				//发送消息处理检测标液数据
+#if DBUG_TEST
+		printf("111111111111111\r\n");
+#endif		
 				xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
 					(uint32_t)EVENT_TEST_VACUOLE_START,
 					(eNotifyAction)eSetBits);
@@ -249,12 +252,13 @@ void HeatInit(void){
 */
 void StepDir(uint8_t sort,uint8_t dir,uint32_t period,uint32_t steps)
 {
+	uint32_t i;
 	if(sort==1){
 	MOTOR1_EN=0;
 	}else if(sort==2){
 		MOTOR2_EN=0;
 	}
-	uint32_t i;
+  delay_us(100);
 	for(i=0;i<=steps;i++)
 	{
 		if(sort==1){
@@ -360,9 +364,9 @@ void HalBoardInit(void)
 	DetectBoard_Initial();//采集板初始化
 	systemState=ScanCodeInit();
 	#if DBUG_TEST
-	printf("continue push vacuole\r\n");
+	printf("start all device\r\n");
 	#endif
-
+  MyUartSend(UART1_PORT,"\r\n",2);
 	//ResectAllDevice();
 	//systemState=ERR_INIT_SUCCESS;
 	
@@ -401,9 +405,9 @@ uint32_t IntialProcess(void)
 uint32_t SelfTestProcess(void)
 {
 	//return ERR_SELFTEST_SUCCESS;
-	int8_t selfTestState =DetectBoard_SelfCheck();
-	//int8_t selfTestState=0;
-	//delay_ms(1000);
+	//int8_t selfTestState =DetectBoard_SelfCheck();
+	int8_t selfTestState=0;
+	delay_ms(1000);
 	if(selfTestState==0){
 		return ERR_SELFTEST_SUCCESS;
 	}else{
@@ -508,10 +512,10 @@ void SendSampleCollect(uint8_t sort,uint8_t vacuoleId)
 * @return void
 */
 void BreakVacuole(void){
-	//标记刺破液包的标记为1
-	startBreakVacyoleFlag=1;
 	//电机行程3mm
-	StepDir(1,0,6400,300);
+	StepDir(1,0,3200,300);
+		//标记刺破液包的标记为1
+	startBreakVacyoleFlag=1;
 }
 
 /*继续推加热片函数(推样品检测函数)
@@ -587,7 +591,9 @@ void ProcessValueKeyDate(char *keyString,char *valueString){
 		double tempValue;
 		uint8_t pushStatus;
 		tempValue=atof(valueString);
-		
+		#if DBUG_TEST
+		printf("start pre temper/r/n");
+		#endif
 		if(preTestFlag==0){
 		//1.推加热片
 		//2.刺破液包
@@ -602,9 +608,10 @@ void ProcessValueKeyDate(char *keyString,char *valueString){
 			StartHeatBody((float)tempValue);
 		}else{
 			//发送电机失败消息，加热电机复原
-		}	
+		}
+		preTestFlag=1;//标记命令已经发送过，重复发送将不处理		
 	}
-		preTestFlag=1;//标记命令已经发送过，重复发送将不处理
+		
 	}
 	//加热控制命令
 		if(mymemcmp(keyString,CMD_TEST_VAL_ON_OFF_HEAT,strlen(CMD_TEST_VAL_ON_OFF_HEAT))==0){
@@ -823,7 +830,6 @@ void  StartSampleVacuole(uint32_t second)
 */
 void	ResectHeatMoto(void){
 	StepDir(2,1,3200,1400);
-
 }
 /*
 * @Description：复位压破液包电机外设
@@ -831,7 +837,7 @@ void	ResectHeatMoto(void){
 * @return void
 */
 void	ResectBreakMoto(void){
-	StepDir(1,1,3200,400);
+	StepDir(1,1,3200,300);
 }
 
 /*
@@ -842,11 +848,11 @@ void	ResectBreakMoto(void){
 void ResectAllDevice(void){
 	//清空各个标志位,主要是处理加热任务
 	/*标志位，用于标记对应事件发生*/
+	startBreakVacyoleFlag=0;						//刺破液包事件标志
 	heatBodyFlag=0;
 	heatSendMessageFlag=0;							//加热事件消息发送
-	startBreakVacyoleFlag=0;						//刺破液包事件标志
-	
-	startTestVacyoleFlag=0;							//检测标液体事件标志
+
+  startTestVacyoleFlag=0;							//检测标液体事件标志
 	startTestSampleFlag=0;              //检测样品液事件标志
 	startCheckImpedance=0;             //开启实时检测阻抗标志
 	preTestFlag=0;
@@ -910,11 +916,11 @@ void EventProcess(uint32_t NotifyValue){
 			//推加热片
 		//	break;
 		case EVENT_BREAK_VACUOLE:
-			//刺破液包
-			BreakVacuole();
 #if DBUG_TEST	 
 		  printf("break vacuole\r\n");
 #endif
+			//刺破液包
+			BreakVacuole();
 			break;
 		case EVENT_PUSH_TEST_VACUOLE:
 			//继续推液包里面的检测体
@@ -953,20 +959,22 @@ void EventProcess(uint32_t NotifyValue){
 			SendSampleFlagData(TEST_SAMPLE_ID,START_SAMPLE_TEST);
 		taskENTER_CRITICAL();           //进入临界区
 			StartSampleVacuole(CHECK_SAMPLE_TIMER);
+			startBreakVacyoleFlag=0;						//刺破液包事件标志
 		taskEXIT_CRITICAL();            //退出临界区
 		  delay_ms(400);
 			SendSampleFlagData(TEST_SAMPLE_ID,STOP_SAMPLE_TEST);
 		  
 		  //停止电阻检测
 			//DetectBoardResetAll();
-			startCheckImpedance=1; 
+			startCheckImpedance=1;
+		
 			xTaskNotify((TaskHandle_t)EventProcessTask_Handler,
 								(uint32_t)EVENT_SAMPLE_TEST_RESECT,
 								(eNotifyAction)eSetBits);
 			break;
 		case EVENT_SAMPLE_TEST_RESECT:
 			//复位
-		  ResectAllDevice();
+			ResectAllDevice();
 			break;
 		default:
 			break;

@@ -42,14 +42,12 @@ void start_task(void *pvParameters);
 TaskHandle_t UartTask_Handler;
 void uart_task(void *pvParameters);
 
-
 uint32_t autoLoadTimeFlag=0;
 //定时器任务
 #define TIMERCONTROL_TASK_PRIO		3
 #define TIMERCONTROL_STK_SIZE 		128  
 TaskHandle_t TimerControlTask_Handler;
 void timercontrol_task(void *pvParameters);
-
 
 //消息处理任务
 #define MESSAGEPROCESS_TASK_PRIO		4
@@ -93,7 +91,6 @@ void start_task(void *pvParameters)
 	HalBoardInit();			//外设驱动包含扫码设备，加热设备，打印设备，阻抗电流设备,外设检测插卡是否到位
 	EXTIX_Init();				//外部中断
 	my_mem_init(SRAMIN);            	//初始化内部内存池
-	
 	//HalBoardInit();//外围接口初始化
   taskENTER_CRITICAL();           //进入临界区
 		//创建周期性定时器
@@ -165,6 +162,7 @@ void AutoReloadCallback(TimerHandle_t xTimer)
 	ScanSensorTime();//
 	ScanHeatingTemp();
 	ScanImpedance();//实时测试阻抗函数
+	
 	SYSLED=!SYSLED;
 }
 
